@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'unsafe-inline'; connect-src 'none'; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3MF Compare Tool — Compare BambuStudio &amp; OrcaSlicer Settings Side by Side</title>
+  <meta name="description" content="Free browser-based tool to compare two 3MF files and see exactly which slicer settings differ. Supports BambuStudio and OrcaSlicer. Everything runs locally — your files never leave your device.">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --diff-bg: #fef3c7;
+      --diff-text: #92400e;
+      --badge-bg: #e2e8f0;
+      --badge-text: #475569;
+      --badge-active-bg: #f59e0b;
+      --badge-active-text: #ffffff;
+      --tab-active-border: #2563eb;
+      --drop-border: #cbd5e1;
+      --drop-border-hover: #2563eb;
+      --drop-bg: #f1f5f9;
+      --drop-bg-hover: #eff6ff;
+      --drop-bg-filled: #f0fdf4;
+      --drop-border-filled: #16a34a;
+      --btn-disabled-bg: #e2e8f0;
+      --btn-disabled-text: #94a3b8;
+      --error-bg: #fef2f2;
+      --error-border: #fca5a5;
+      --error-text: #dc2626;
+      --info-bg: #eff6ff;
+      --info-border: #bfdbfe;
+      --info-text: #1d4ed8;
+      --identical-text: #94a3b8;
+      --section-header-bg: #f1f5f9;
+      --section-header-text: #475569;
+      --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --surface: #1e293b;
+        --border: #334155;
+        --text: #f1f5f9;
+        --text-muted: #94a3b8;
+        --accent: #3b82f6;
+        --accent-hover: #60a5fa;
+        --diff-bg: #451a03;
+        --diff-text: #fcd34d;
+        --badge-bg: #334155;
+        --badge-text: #94a3b8;
+        --badge-active-bg: #d97706;
+        --badge-active-text: #ffffff;
+        --tab-active-border: #3b82f6;
+        --drop-border: #475569;
+        --drop-border-hover: #3b82f6;
+        --drop-bg: #1e293b;
+        --drop-bg-hover: #172554;
+        --drop-bg-filled: #052e16;
+        --drop-border-filled: #16a34a;
+        --btn-disabled-bg: #334155;
+        --btn-disabled-text: #64748b;
+        --error-bg: #450a0a;
+        --error-border: #b91c1c;
+        --error-text: #fca5a5;
+        --info-bg: #172554;
+        --info-border: #1e40af;
+        --info-text: #93c5fd;
+        --identical-text: #475569;
+        --section-header-bg: #1e293b;
+        --section-header-text: #94a3b8;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 28px 16px 0;
+      line-height: 1.6;
+    }
+
+    #app { max-width: 1100px; margin: 0 auto; }
+
+    /* ── Header ── */
+    #header { text-align: center; margin-bottom: 28px; }
+    #header h1 { font-size: 1.875rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+    #header .tagline { color: var(--text-muted); font-size: 0.9375rem; margin-bottom: 14px; }
+
+    .header-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .header-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .header-meta-item::before {
+      content: '';
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.45;
+      flex-shrink: 0;
+    }
+
+    /* ── Drop zones ── */
+    #drop-zone-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 560px) { #drop-zone-row { grid-template-columns: 1fr; } }
+
+    .drop-zone {
+      border: 2px dashed var(--drop-border);
+      border-radius: 12px;
+      background: var(--drop-bg);
+      padding: 26px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--drop-border-hover);
+      background: var(--drop-bg-hover);
+    }
+    .drop-zone.filled {
+      border-style: solid;
+      border-color: var(--drop-border-filled);
+      background: var(--drop-bg-filled);
+    }
+    .drop-zone input[type="file"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .drop-zone label {
+      display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer;
+    }
+    .zone-icon { font-size: 1.875rem; line-height: 1; }
+    .zone-title { font-size: 1rem; font-weight: 600; }
+    .zone-hint { font-size: 0.8125rem; color: var(--text-muted); }
+    .file-name { margin-top: 10px; font-size: 0.875rem; font-weight: 600; color: var(--drop-border-filled); word-break: break-all; min-height: 1.3em; }
+    .slicer-info { font-size: 0.8125rem; color: var(--text-muted); min-height: 1.2em; margin-top: 2px; }
+
+    /* ── Action row ── */
+    #action-row { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 28px; }
+    #action-buttons { display: flex; gap: 10px; }
+
+    button {
+      font-family: inherit; font-size: 0.9375rem; font-weight: 600;
+      border: none; border-radius: 8px; cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    #btn-compare { background: var(--accent); color: #fff; padding: 10px 32px; }
+    #btn-compare:hover:not(:disabled) { background: var(--accent-hover); }
+    #btn-compare:disabled { background: var(--btn-disabled-bg); color: var(--btn-disabled-text); cursor: not-allowed; }
+    #btn-reset { background: transparent; color: var(--text-muted); padding: 10px 18px; border: 1px solid var(--border); }
+    #btn-reset:hover { color: var(--text); border-color: var(--text-muted); }
+
+    /* ── Spinner ── */
+    #status-msg { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--text-muted); min-height: 24px; }
+    .spinner { width: 18px; height: 18px; flex-shrink: 0; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error banner ── */
+    #error-banner { background: var(--error-bg); border: 1px solid var(--error-border); color: var(--error-text); border-radius: 8px; padding: 12px 16px; font-size: 0.875rem; display: none; align-items: flex-start; gap: 8px; margin-bottom: 16px; }
+    #error-close { margin-left: auto; background: none; color: var(--error-text); font-size: 1.25rem; font-weight: 400; padding: 0 2px; line-height: 1; border: none; cursor: pointer; flex-shrink: 0; }
+
+    /* ── Info banner ── */
+    .info-banner { background: var(--info-bg); border: 1px solid var(--info-border); color: var(--info-text); border-radius: 8px; padding: 10px 14px; font-size: 0.8125rem; margin-bottom: 12px; }
+
+    /* ── Results card ── */
+    #results { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 48px; }
+
+    #compare-header { padding: 13px 20px; border-bottom: 1px solid var(--border); font-size: 0.875rem; color: var(--text-muted); }
+
+    /* ── Tabs ── */
+    #tab-bar { display: flex; border-bottom: 1px solid var(--border); padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+    #tab-bar::-webkit-scrollbar { display: none; }
+    .tab-btn { background: none; color: var(--text-muted); padding: 11px 14px; font-size: 0.875rem; font-weight: 500; border-bottom: 2px solid transparent; border-radius: 0; white-space: nowrap; display: flex; align-items: center; gap: 6px; margin-bottom: -1px; }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--tab-active-border); }
+    .badge { font-size: 0.75rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--badge-bg); color: var(--badge-text); }
+    .badge.has-diffs { background: var(--badge-active-bg); color: var(--badge-active-text); }
+
+    /* ── Tab panels ── */
+    .tab-panel { display: none; padding: 20px; }
+    .tab-panel.active { display: block; }
+
+    /* ── Panel header ── */
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+    .panel-title { font-size: 0.875rem; font-weight: 600; color: var(--text-muted); }
+    .panel-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    /* ── Search box ── */
+    .search-wrap { position: relative; }
+    .search-wrap::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 0.875rem; pointer-events: none; }
+    #search-input {
+      font-family: inherit; font-size: 0.875rem; padding: 6px 10px 6px 32px;
+      border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);
+      outline: none; width: 220px;
+      transition: border-color 0.15s;
+    }
+    #search-input:focus { border-color: var(--accent); }
+    #search-input::placeholder { color: var(--text-muted); }
+
+    /* ── Action buttons ── */
+    .action-btn {
+      background: transparent; color: var(--text-muted); border: 1px solid var(--border);
+      padding: 5px 12px; font-size: 0.8125rem; font-weight: 500; border-radius: 6px;
+    }
+    .action-btn:hover { color: var(--text); border-color: var(--text-muted); }
+    .action-btn.done { color: var(--drop-border-filled); border-color: var(--drop-border-filled); }
+
+    /* ── Tables ── */
+    .diff-table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    th { background: var(--bg); color: var(--text-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 8px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr.diff-row td { background: var(--diff-bg); }
+    tr.identical-row td { color: var(--identical-text); }
+    tr.hidden-row { display: none; }
+
+    /* Section header rows inside tables */
+    tr.section-row td {
+      background: var(--section-header-bg);
+      color: var(--section-header-text);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 6px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .key-cell { font-family: var(--mono); font-size: 0.8125rem; word-break: break-all; }
+    .label-cell { font-size: 0.875rem; color: var(--text); }
+    .value-cell { font-family: var(--mono); font-size: 0.8125rem; word-break: break-all; white-space: pre-wrap; }
+    .diff-a { color: #dc2626; }
+    .diff-b { color: #16a34a; }
+    @media (prefers-color-scheme: dark) {
+      .diff-a { color: #f87171; }
+      .diff-b { color: #4ade80; }
+    }
+
+    /* Color swatch */
+    .color-swatch {
+      display: inline-block; width: 12px; height: 12px;
+      border-radius: 3px; border: 1px solid rgba(0,0,0,0.15);
+      vertical-align: middle; margin-right: 5px; flex-shrink: 0;
+    }
+    .color-val-wrap { display: flex; align-items: center; }
+
+    /* Collapsible long values */
+    details summary { cursor: pointer; color: var(--accent); font-size: 0.8125rem; user-select: none; list-style: none; }
+    details summary::before { content: '▶ '; font-size: 0.65rem; }
+    details[open] summary::before { content: '▼ '; }
+    details pre { font-family: var(--mono); font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; background: var(--bg); padding: 8px 10px; border-radius: 6px; margin-top: 6px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+    .empty-icon { font-size: 2.25rem; margin-bottom: 10px; }
+    .empty-state p { font-size: 0.9375rem; }
+
+    /* ── SEO Footer ── */
+    #seo-footer {
+      border-top: 1px solid var(--border);
+      padding: 48px 20px 60px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .seo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 32px; }
+    .seo-section h2 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+    .seo-section p, .seo-section li { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; }
+    .seo-section ul { padding-left: 18px; }
+    .seo-section li { margin-bottom: 3px; }
+    .seo-bottom { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 0.8125rem; color: var(--text-muted); text-align: center; }
+
+    /* ── View-mode segmented toggle ── */
+    .seg-toggle { display: flex; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
+    .seg-btn { background: none; color: var(--text-muted); padding: 4px 12px; font-size: 0.8125rem; font-weight: 500; border-radius: 6px; border: none; cursor: pointer; transition: background 0.12s, color 0.12s; white-space: nowrap; }
+    .seg-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+    @media (prefers-color-scheme: dark) { .seg-btn.active { background: var(--border); } }
+
+    /* Jump to top */
+    #jump-top { position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: #fff; border-radius: 8px; padding: 8px 14px; font-size: 0.8125rem; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.2s; border: none; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    #jump-top.visible { opacity: 1; pointer-events: auto; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <div id="header">
+    <h1>3MF Compare Tool</h1>
+    <p class="tagline">See exactly which slicer settings differ between two .3mf files — instantly, in your browser.</p>
+    <div class="header-meta">
+      <span class="header-meta-item">Built for BambuStudio &amp; OrcaSlicer — also works with Elegoo, other OrcaSlicer forks, and PrusaSlicer-based slicers (settings names may differ slightly)</span>
+      <span class="header-meta-item">Runs 100% locally in your browser — your files never leave your device</span>
+    </div>
+  </div>
+
+  <div id="drop-zone-row">
+    <div class="drop-zone" id="zone-a">
+      <input type="file" id="input-a" accept=".3mf">
+      <label for="input-a">
+        <span class="zone-icon">📂</span>
+        <span class="zone-title">File A</span>
+        <span class="zone-hint">Drop a .3mf file here, or click to browse</span>
+      </label>
+      <p class="file-name" id="file-name-a"></p>
+      <p class="slicer-info" id="slicer-info-a"></p>
+    </div>
+    <div class="drop-zone" id="zone-b">
+      <input type="file" id="input-b" accept=".3mf">
+      <label for="input-b">
+        <span class="zone-icon">📂</span>
+        <span class="zone-title">File B</span>
+        <span class="zone-hint">Drop a .3mf file here, or click to browse</span>
+      </label>
+      <p class="file-name" id="file-name-b"></p>
+      <p class="slicer-info" id="slicer-info-b"></p>
+    </div>
+  </div>
+
+  <div id="action-row">
+    <div id="action-buttons">
+      <button id="btn-compare" disabled>Compare Files</button>
+      <button id="btn-reset">Reset</button>
+    </div>
+    <div id="status-msg"></div>
+  </div>
+
+  <div id="error-banner">
+    <span id="error-text"></span>
+    <button id="error-close" title="Dismiss">×</button>
+  </div>
+
+  <div id="results">
+    <div id="compare-header"></div>
+    <div id="tab-bar">
+      <button class="tab-btn active" data-tab="settings">
+        Settings Differences <span class="badge" id="badge-settings">—</span>
+      </button>
+      <button class="tab-btn" data-tab="printer">
+        Printer &amp; Profile <span class="badge" id="badge-printer">—</span>
+      </button>
+      <button class="tab-btn" data-tab="filaments">
+        Filaments <span class="badge" id="badge-filaments">—</span>
+      </button>
+    </div>
+    <div id="panel-settings"  class="tab-panel active"></div>
+    <div id="panel-printer"   class="tab-panel"></div>
+    <div id="panel-filaments" class="tab-panel"></div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- SEO footer — outside #app so it's always visible -->
+<footer id="seo-footer">
+  <div class="seo-grid">
+    <div class="seo-section">
+      <h2>What is the 3MF Compare Tool?</h2>
+      <p>A free, browser-based utility for 3D printing enthusiasts who use <strong>BambuStudio</strong> or <strong>OrcaSlicer</strong>. Drop in two <code>.3mf</code> files and instantly see a side-by-side breakdown of every setting that differs — no software to install, no account required.</p>
+    </div>
+    <div class="seo-section">
+      <h2>Why compare 3MF files?</h2>
+      <p>When troubleshooting print quality or sharing settings on forums like Reddit, it's hard to know exactly what changed between two profiles. Your slicer doesn't offer a diff view. This tool does — showing changed slicer settings, your printer profile, and filament info all in one place. Built for BambuStudio and OrcaSlicer, but also works with Elegoo, other OrcaSlicer forks, and PrusaSlicer-based slicers.</p>
+    </div>
+    <div class="seo-section">
+      <h2>How does it work?</h2>
+      <p>A <code>.3mf</code> file is a ZIP archive. Inside is a <code>project_settings.config</code> JSON file containing all your slicer settings. This tool reads both files in your browser, parses the JSON, and shows only the differences in a searchable, copyable table.</p>
+    </div>
+    <div class="seo-section">
+      <h2>Privacy &amp; Security</h2>
+      <ul>
+        <li>All processing happens locally in JavaScript</li>
+        <li>Your files are never uploaded to any server</li>
+        <li>No data is transmitted anywhere — ever</li>
+        <li>The only external resource is the JSZip library, loaded with a security hash (SRI) to prevent tampering</li>
+        <li>Open source — inspect the page source any time</li>
+      </ul>
+    </div>
+  </div>
+  <p class="seo-bottom">3MF Compare Tool · Supports BambuStudio and OrcaSlicer · Free &amp; open source · No data leaves your device</p>
+</footer>
+
+<button id="jump-top">↑ Top</button>
+
+<!-- JSZip verified via Subresource Integrity — will not run if the CDN file is tampered with -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+        integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG"
+        crossorigin="anonymous"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Constants — curated keys for Printer Profile and Filaments tabs
+  // ═══════════════════════════════════════════════════════════════════
+
+  /** Keys shown in the "Printer Info" section of the Printer & Profile tab */
+  const PRINTER_INFO_KEYS = [
+    ['machine_type',      'Printer Model'],
+    ['printer_model',     'Printer Model (alt key)'],
+    ['nozzle_diameter',   'Nozzle Diameter (mm)'],
+    ['printable_area',    'Build Plate Area'],
+    ['max_print_height',  'Max Print Height (mm)'],
+  ];
+
+  /** Keys shown in the "Print Quality" section of the Printer & Profile tab */
+  const PRINT_QUALITY_KEYS = [
+    ['print_settings_id',            'Print Profile Name'],
+    ['layer_height',                  'Layer Height (mm)'],
+    ['initial_layer_height',          'First Layer Height (mm)'],
+    ['wall_loops',                    'Wall Count'],
+    ['top_shell_layers',              'Top Layers'],
+    ['bottom_shell_layers',           'Bottom Layers'],
+    ['top_shell_thickness',           'Top Shell Thickness (mm)'],
+    ['bottom_shell_thickness',        'Bottom Shell Thickness (mm)'],
+    ['sparse_infill_density',         'Infill Density (%)'],
+    ['sparse_infill_pattern',         'Infill Pattern'],
+    ['enable_support',                'Supports Enabled'],
+    ['support_type',                  'Support Type'],
+    ['support_on_build_plate_only',   'Supports on Plate Only'],
+    ['raft_layers',                   'Raft Layers'],
+    ['timelapse_type',                'Timelapse'],
+  ];
+
+  /** Per-slot keys shown in the Filaments tab */
+  const FILAMENT_SLOT_KEYS = [
+    ['filament_settings_id',              'Profile Name'],
+    ['filament_type',                     'Type'],
+    ['filament_colour',                   'Color'],
+    ['filament_vendor',                   'Vendor'],
+    ['nozzle_temperature',                'Nozzle Temp (°C)'],
+    ['nozzle_temperature_initial_layer',  'First Layer Nozzle (°C)'],
+    ['bed_temperature',                   'Bed Temp (°C)'],
+    ['bed_temperature_initial_layer',     'First Layer Bed (°C)'],
+    ['filament_flow_ratio',               'Flow Ratio'],
+    ['filament_max_volumetric_speed',     'Max Flow Rate (mm³/s)'],
+    ['filament_id',                       'Filament ID'],
+  ];
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  State
+  // ═══════════════════════════════════════════════════════════════════
+  const state = {
+    fileA: null, fileB: null,
+    zipA: null,  zipB: null,
+    objA: null,  objB: null,   // parsed project_settings.config objects
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  DOM helpers  — all user data uses textContent, never innerHTML
+  // ═══════════════════════════════════════════════════════════════════
+  const $ = id => document.getElementById(id);
+
+  function mkEl(tag, props, children) {
+    const e = document.createElement(tag);
+    if (props) {
+      for (const [k, v] of Object.entries(props)) {
+        if (k === 'className') e.className = v;
+        else if (k === 'textContent') e.textContent = v;
+        else e.setAttribute(k, v);
+      }
+    }
+    if (children) {
+      for (const c of children) {
+        if (c == null) continue;
+        e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+      }
+    }
+    return e;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Value utilities
+  // ═══════════════════════════════════════════════════════════════════
+  function parseJSON(text) {
+    if (!text) return null;
+    try { return JSON.parse(text); } catch { return null; }
+  }
+
+  /**
+   * Canonical string used ONLY for equality comparison (never displayed).
+   *
+   * Key rules that eliminate false positives:
+   *  • Numbers and strings with the same value compare equal ("6000" == 6000)
+   *  • A single-element array equals the same scalar value  (["6000"] == 6000)
+   *  • An array where every element is the same equals that scalar (["70","70"] == "70")
+   *    — avoids noise when one file was saved with 1 filament slot vs 2 identical slots
+   *  • Arrays with truly different values stay different (["70","80"] != "70")
+   */
+  function normalizeValue(val) {
+    if (val === null || val === undefined) return '';
+    if (Array.isArray(val)) {
+      if (val.length === 0) return '';
+      const strs = val.map(v => String(v ?? '').trim());
+      const unique = new Set(strs);
+      // All slots identical → treat as a single scalar value
+      if (unique.size === 1) return [...unique][0];
+      // Genuinely different values per slot
+      return strs.join('\x00'); // null-byte separator can't appear in real setting values
+    }
+    return String(val).trim();
+  }
+
+  /**
+   * Human-readable display string for a setting value.
+   * Mirrors the same collapsing logic as normalizeValue so that values
+   * that compare as equal also *look* the same on screen.
+   */
+  function formatValue(val) {
+    if (val === null || val === undefined) return { text: '—', isLong: false };
+    if (Array.isArray(val)) {
+      if (val.length === 0) return { text: '—', isLong: false };
+      const strs = val.map(v => { const s = String(v ?? '').trim(); return s === '' ? '—' : s; });
+      const unique = new Set(strs);
+      const text = unique.size === 1 ? [...unique][0] : strs.join(' | ');
+      return { text, isLong: text.length > 120 };
+    }
+    const s = String(val).trim();
+    return { text: s === '' ? '—' : s, isLong: s.length > 120 };
+  }
+
+  /** Returns true if s looks like a CSS hex color (#RGB, #RRGGBB, #RRGGBBAA) */
+  function isHexColor(s) {
+    return /^#[0-9A-Fa-f]{3}(?:[0-9A-Fa-f]{3}(?:[0-9A-Fa-f]{2})?)?$/.test(s.trim());
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  ZIP utilities
+  // ═══════════════════════════════════════════════════════════════════
+  async function loadZip(file) {
+    try {
+      return await JSZip.loadAsync(file);
+    } catch {
+      throw new Error(`"${file.name}" could not be read as a ZIP/3MF file. Is it a valid .3mf?`);
+    }
+  }
+
+  async function readZipText(zip, path) {
+    const entry = zip.file(path);
+    if (!entry) return null;
+    try { return await entry.async('string'); } catch { return null; }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Slicer detection
+  // ═══════════════════════════════════════════════════════════════════
+  async function detectSlicer(zip) {
+    const modelText = await readZipText(zip, '3D/3dmodel.model');
+    if (modelText) {
+      const rx = /<metadata\s+name=["']application["'][^>]*>([^<]+)</i;
+      const m = modelText.match(rx);
+      if (m) return splitSlicerString(m[1]);
+    }
+    const sliceText = await readZipText(zip, 'Metadata/slice_info.config');
+    if (sliceText) {
+      const mType = sliceText.match(/key=["']X-BBL-Client-Type["']\s+value=["']([^"']+)["']/i);
+      const mVer  = sliceText.match(/key=["']X-BBL-Client-Version["']\s+value=["']([^"']+)["']/i);
+      if (mType) return { name: mType[1], version: mVer ? mVer[1] : '' };
+    }
+    return { name: 'Unknown slicer', version: '' };
+  }
+
+  function splitSlicerString(s) {
+    s = s.trim();
+    const m = s.match(/^([A-Za-z][A-Za-z ]+?)[-_\s]+(\d[\d.].*)$/);
+    if (m) return { name: m[1].trim(), version: m[2].trim() };
+    return { name: s, version: '' };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Settings — compute all rows with a `differs` flag
+  // ═══════════════════════════════════════════════════════════════════
+  function computeAllSettings(objA, objB) {
+    if (!objA && !objB) return [];
+    const allKeys = new Set([
+      ...(objA ? Object.keys(objA) : []),
+      ...(objB ? Object.keys(objB) : []),
+    ]);
+    const rows = [];
+    for (const key of [...allKeys].sort((a, b) => a.localeCompare(b))) {
+      const valA = objA ? objA[key] : undefined;
+      const valB = objB ? objB[key] : undefined;
+      const differs = normalizeValue(valA) !== normalizeValue(valB);
+      rows.push({
+        key,
+        fmtA: valA !== undefined ? formatValue(valA) : { text: '(not in file A)', isLong: false },
+        fmtB: valB !== undefined ? formatValue(valB) : { text: '(not in file B)', isLong: false },
+        differs,
+      });
+    }
+    return rows;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Printer Profile builder
+  // ═══════════════════════════════════════════════════════════════════
+  function buildPrinterProfileRows(objA, objB) {
+    const rows = [];
+
+    const addSection = label => rows.push({ isSection: true, label });
+    const addRow = (key, label) => {
+      const rawA = objA?.[key];
+      const rawB = objB?.[key];
+      // Skip rows where both sides have no data
+      if (rawA === undefined && rawB === undefined) return;
+      const fmtA = rawA !== undefined ? formatValue(rawA) : { text: '—', isLong: false };
+      const fmtB = rawB !== undefined ? formatValue(rawB) : { text: '—', isLong: false };
+      const differs = normalizeValue(rawA) !== normalizeValue(rawB);
+      rows.push({ key, label, fmtA, fmtB, differs });
+    };
+
+    addSection('Printer');
+    for (const [key, label] of PRINTER_INFO_KEYS) addRow(key, label);
+
+    addSection('Print Quality / Profile');
+    for (const [key, label] of PRINT_QUALITY_KEYS) addRow(key, label);
+
+    return rows;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Filaments builder
+  // ═══════════════════════════════════════════════════════════════════
+  function buildFilamentRows(objA, objB) {
+    const slotCount = Math.max(
+      objA?.filament_type?.length ?? objA?.filament_settings_id?.length ?? 1,
+      objB?.filament_type?.length ?? objB?.filament_settings_id?.length ?? 1,
+    );
+
+    const rows = [];
+    for (let i = 0; i < slotCount; i++) {
+      rows.push({ isSection: true, label: `Filament ${i + 1}` });
+      for (const [key, label] of FILAMENT_SLOT_KEYS) {
+        const arrA = objA?.[key];
+        const arrB = objB?.[key];
+        const rawA = Array.isArray(arrA) ? (arrA[i] ?? null) : null;
+        const rawB = Array.isArray(arrB) ? (arrB[i] ?? null) : null;
+        if (rawA === null && rawB === null) continue;
+        const fmtA = rawA !== null ? { text: String(rawA), isLong: false } : { text: '—', isLong: false };
+        const fmtB = rawB !== null ? { text: String(rawB), isLong: false } : { text: '—', isLong: false };
+        const differs = (rawA ?? '') !== (rawB ?? '');
+        rows.push({ key, label, fmtA, fmtB, differs, isColor: key === 'filament_colour' });
+      }
+    }
+    return rows;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Markdown / Reddit copy
+  // ═══════════════════════════════════════════════════════════════════
+  function buildMarkdownTable(diffs, fileAName, fileBName) {
+    const esc = s => s.replace(/\|/g, '\\|').replace(/[\r\n]+/g, ' ');
+    const trunc = (s, n = 80) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+
+    const lines = [
+      `**3MF Slicer Settings Comparison**`,
+      ``,
+      `File A: \`${fileAName}\`  `,
+      `File B: \`${fileBName}\``,
+      ``,
+      `| Setting | File A | File B |`,
+      `|:---|:---|:---|`,
+    ];
+    for (const d of diffs) {
+      lines.push(`| ${esc(d.key)} | ${esc(trunc(d.fmtA.text))} | ${esc(trunc(d.fmtB.text))} |`);
+    }
+    lines.push(``, `*Compared using 3MF Compare Tool*`);
+    return lines.join('\n');
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Rendering helpers
+  // ═══════════════════════════════════════════════════════════════════
+  function renderInfoBanner(parent, msg) {
+    parent.appendChild(mkEl('div', { className: 'info-banner', textContent: msg }));
+  }
+
+  function renderEmptyState(parent, msg) {
+    const wrap = mkEl('div', { className: 'empty-state' });
+    wrap.appendChild(mkEl('div', { className: 'empty-icon', textContent: '✓' }));
+    wrap.appendChild(mkEl('p', { textContent: msg }));
+    parent.appendChild(wrap);
+  }
+
+  /** Create a table cell containing a value, with optional color swatch and collapsible for long values */
+  function makeValueTd(fmt, diffClass, showColorSwatch) {
+    const td = document.createElement('td');
+    const colorText = fmt.text.trim();
+
+    if (showColorSwatch && isHexColor(colorText)) {
+      const wrap = mkEl('div', { className: 'color-val-wrap' });
+      const swatch = mkEl('span', { className: 'color-swatch' });
+      swatch.style.backgroundColor = colorText;  // safe: validated as hex color
+      const span = mkEl('span', { className: `value-cell ${diffClass}`, textContent: colorText });
+      wrap.appendChild(swatch);
+      wrap.appendChild(span);
+      td.appendChild(wrap);
+    } else if (!fmt.isLong) {
+      td.appendChild(mkEl('span', { className: `value-cell ${diffClass}`, textContent: fmt.text }));
+    } else {
+      const summary = mkEl('summary', { textContent: 'Show value' });
+      const pre = mkEl('pre', { textContent: fmt.text });
+      td.appendChild(mkEl('details', {}, [summary, pre]));
+    }
+    return td;
+  }
+
+  function makeLabelTd(text) {
+    return mkEl('td', {}, [mkEl('span', { className: 'label-cell', textContent: text })]);
+  }
+
+  function makeKeyTd(text) {
+    return mkEl('td', {}, [mkEl('span', { className: 'key-cell', textContent: text })]);
+  }
+
+  function buildTable(headerLabels, bodyRows) {
+    const wrap = mkEl('div', { className: 'diff-table-wrap' });
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headTr = document.createElement('tr');
+    for (const h of headerLabels) headTr.appendChild(mkEl('th', { textContent: h }));
+    thead.appendChild(headTr);
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    for (const r of bodyRows) tbody.appendChild(r);
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Settings Differences tab
+  // ═══════════════════════════════════════════════════════════════════
+  function renderSettingsTab(allRows, objAMissing, objBMissing, fileAName, fileBName) {
+    const panel = $('panel-settings');
+    panel.textContent = '';
+
+    if (objAMissing) renderInfoBanner(panel, 'project_settings.config not found in File A. BambuStudio and OrcaSlicer 3MF files are supported.');
+    if (objBMissing) renderInfoBanner(panel, 'project_settings.config not found in File B. BambuStudio and OrcaSlicer 3MF files are supported.');
+    if (objAMissing && objBMissing) { renderEmptyState(panel, 'No slicer settings to compare.'); return; }
+
+    const diffRows  = allRows.filter(r => r.differs);
+    const diffCount = diffRows.length;
+    const totalCount = allRows.length;
+
+    // ── Panel header ──────────────────────────────────────────────
+    const header = mkEl('div', { className: 'panel-header' });
+
+    const countSpan = mkEl('span', { className: 'panel-title' });
+    const updateCountLabel = mode =>
+      (countSpan.textContent = mode === 'diffs'
+        ? `${diffCount} difference${diffCount !== 1 ? 's' : ''} found`
+        : `${diffCount} difference${diffCount !== 1 ? 's' : ''} highlighted · ${totalCount} total settings`);
+    updateCountLabel('diffs');
+
+    // Segmented toggle: Differences only | All settings
+    panel.dataset.view = 'diffs';
+    const segToggle = mkEl('div', { className: 'seg-toggle' });
+    const btnDiffs  = mkEl('button', { className: 'seg-btn active', textContent: 'Differences only' });
+    const btnAll    = mkEl('button', { className: 'seg-btn',        textContent: 'All settings' });
+    segToggle.appendChild(btnDiffs);
+    segToggle.appendChild(btnAll);
+
+    const searchWrap  = mkEl('div', { className: 'search-wrap' });
+    const searchInput = mkEl('input', { id: 'search-input', type: 'text', placeholder: 'Filter settings…' });
+    searchWrap.appendChild(searchInput);
+
+    const copyBtn = mkEl('button', { className: 'action-btn', textContent: 'Copy as Markdown Table' });
+    copyBtn.addEventListener('click', () => {
+      const md = buildMarkdownTable(diffRows, fileAName, fileBName);
+      navigator.clipboard.writeText(md).then(() => {
+        copyBtn.textContent = '✓ Copied!';
+        copyBtn.classList.add('done');
+        setTimeout(() => { copyBtn.textContent = 'Copy as Markdown Table'; copyBtn.classList.remove('done'); }, 2500);
+      }).catch(() => {});
+    });
+
+    header.appendChild(countSpan);
+    header.appendChild(mkEl('div', { className: 'panel-actions' }, [segToggle, searchWrap, copyBtn]));
+    panel.appendChild(header);
+
+    if (allRows.length === 0) { renderEmptyState(panel, 'No slicer settings to compare.'); return; }
+    if (diffCount === 0) {
+      // Still render the table so "All settings" toggle works
+    }
+
+    // ── Build all table rows up-front ────────────────────────────
+    // Each row knows its `differs` state; visibility is driven by the
+    // `refreshVisibility()` function rather than re-rendering.
+    const tableRowMeta = allRows.map(row => {
+      const tr = document.createElement('tr');
+      tr.className   = row.differs ? 'diff-row' : 'identical-row';
+      tr.dataset.key = row.key.toLowerCase();
+      tr.dataset.differs = row.differs ? '1' : '0';
+      tr.appendChild(makeKeyTd(row.key));
+      tr.appendChild(makeValueTd(row.fmtA, row.differs ? 'diff-a' : '', false));
+      tr.appendChild(makeValueTd(row.fmtB, row.differs ? 'diff-b' : '', false));
+      return { tr, differs: row.differs };
+    });
+
+    panel.appendChild(buildTable(['Setting', 'File A', 'File B'], tableRowMeta.map(m => m.tr)));
+
+    if (diffCount === 0 && panel.dataset.view === 'diffs') {
+      renderEmptyState(panel, 'No differences found in slicer settings.');
+    }
+
+    // ── Shared visibility updater ────────────────────────────────
+    function refreshVisibility() {
+      const mode = panel.dataset.view;
+      const term = searchInput.value.toLowerCase().trim();
+      for (const { tr, differs } of tableRowMeta) {
+        const hideByMode   = mode === 'diffs' && !differs;
+        const hideBySearch = term !== '' && !tr.dataset.key.includes(term);
+        tr.classList.toggle('hidden-row', hideByMode || hideBySearch);
+      }
+    }
+    refreshVisibility();
+
+    // ── Toggle handlers ──────────────────────────────────────────
+    btnDiffs.addEventListener('click', () => {
+      panel.dataset.view = 'diffs';
+      btnDiffs.classList.add('active'); btnAll.classList.remove('active');
+      updateCountLabel('diffs');
+      refreshVisibility();
+    });
+    btnAll.addEventListener('click', () => {
+      panel.dataset.view = 'all';
+      btnAll.classList.add('active'); btnDiffs.classList.remove('active');
+      updateCountLabel('all');
+      refreshVisibility();
+    });
+
+    searchInput.addEventListener('input', refreshVisibility);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Printer & Profile tab
+  // ═══════════════════════════════════════════════════════════════════
+  function renderPrinterTab(objA, objB) {
+    const panel = $('panel-printer');
+    panel.textContent = '';
+
+    if (!objA && !objB) { renderInfoBanner(panel, 'project_settings.config not found in either file.'); return; }
+
+    // Explain the purpose so users don't wonder why settings appear here AND in the Settings tab
+    renderInfoBanner(panel,
+      'Shows a curated snapshot of printer and print-quality settings for both files — ' +
+      'whether or not they differ — so you can quickly see what printer and profile each file uses. ' +
+      'Differences are highlighted. For the full list of every changed setting, use the Settings Differences tab.');
+
+    const rows = buildPrinterProfileRows(objA, objB);
+    const diffCount = rows.filter(r => !r.isSection && r.differs).length;
+
+    const header = mkEl('div', { className: 'panel-header' });
+    header.appendChild(mkEl('span', { className: 'panel-title',
+      textContent: diffCount > 0
+        ? `${diffCount} difference${diffCount !== 1 ? 's' : ''} found`
+        : 'No differences — both files use the same printer profile' }));
+    panel.appendChild(header);
+
+    if (rows.length === 0) { renderEmptyState(panel, 'No printer profile data found.'); return; }
+
+    const tableRows = rows.map(r => {
+      const tr = document.createElement('tr');
+      if (r.isSection) {
+        tr.className = 'section-row';
+        const td = document.createElement('td');
+        td.setAttribute('colspan', '3');
+        td.textContent = r.label;
+        tr.appendChild(td);
+      } else {
+        tr.className = r.differs ? 'diff-row' : 'identical-row';
+        tr.appendChild(makeLabelTd(r.label));
+        tr.appendChild(makeValueTd(r.fmtA, r.differs ? 'diff-a' : '', false));
+        tr.appendChild(makeValueTd(r.fmtB, r.differs ? 'diff-b' : '', false));
+      }
+      return tr;
+    });
+    panel.appendChild(buildTable(['Property', 'File A', 'File B'], tableRows));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Filaments tab
+  // ═══════════════════════════════════════════════════════════════════
+  function renderFilamentsTab(objA, objB) {
+    const panel = $('panel-filaments');
+    panel.textContent = '';
+
+    if (!objA && !objB) { renderInfoBanner(panel, 'project_settings.config not found in either file.'); return; }
+
+    const rows = buildFilamentRows(objA, objB);
+    const diffCount = rows.filter(r => !r.isSection && r.differs).length;
+
+    const header = mkEl('div', { className: 'panel-header' });
+    header.appendChild(mkEl('span', { className: 'panel-title',
+      textContent: diffCount > 0
+        ? `${diffCount} difference${diffCount !== 1 ? 's' : ''} found`
+        : 'No differences — both files use the same filament settings' }));
+    panel.appendChild(header);
+
+    if (rows.length === 0) { renderEmptyState(panel, 'No filament data found.'); return; }
+
+    const tableRows = rows.map(r => {
+      const tr = document.createElement('tr');
+      if (r.isSection) {
+        tr.className = 'section-row';
+        const td = document.createElement('td');
+        td.setAttribute('colspan', '3');
+        td.textContent = r.label;
+        tr.appendChild(td);
+      } else {
+        tr.className = r.differs ? 'diff-row' : 'identical-row';
+        tr.appendChild(makeLabelTd(r.label));
+        tr.appendChild(makeValueTd(r.fmtA, r.differs ? 'diff-a' : '', !!r.isColor));
+        tr.appendChild(makeValueTd(r.fmtB, r.differs ? 'diff-b' : '', !!r.isColor));
+      }
+      return tr;
+    });
+    panel.appendChild(buildTable(['Property', 'File A', 'File B'], tableRows));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Badge + tab switching
+  // ═══════════════════════════════════════════════════════════════════
+  function switchTab(name) {
+    for (const btn of document.querySelectorAll('.tab-btn'))
+      btn.classList.toggle('active', btn.dataset.tab === name);
+    for (const pnl of document.querySelectorAll('.tab-panel'))
+      pnl.classList.toggle('active', pnl.id === `panel-${name}`);
+  }
+
+  function updateBadge(name, count) {
+    const b = $(`badge-${name}`);
+    if (!b) return;
+    b.textContent = String(count);
+    b.classList.toggle('has-diffs', count > 0);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  UI helpers
+  // ═══════════════════════════════════════════════════════════════════
+  function setLoading(on) {
+    $('btn-compare').disabled = on;
+    const msg = $('status-msg');
+    msg.textContent = '';
+    if (on) {
+      msg.appendChild(mkEl('div', { className: 'spinner' }));
+      msg.appendChild(document.createTextNode(' Comparing…'));
+    }
+  }
+
+  function showError(message) {
+    $('error-text').textContent = message;
+    $('error-banner').style.display = 'flex';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  File selection
+  // ═══════════════════════════════════════════════════════════════════
+  function onFileSelected(slot, file) {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.3mf')) {
+      showError(`"${file.name}" is not a .3mf file. Please select a valid 3MF file.`);
+      return;
+    }
+    if (slot === 'A') {
+      state.fileA = file;
+      $('file-name-a').textContent = file.name;
+      $('zone-a').classList.add('filled');
+      $('slicer-info-a').textContent = '';
+    } else {
+      state.fileB = file;
+      $('file-name-b').textContent = file.name;
+      $('zone-b').classList.add('filled');
+      $('slicer-info-b').textContent = '';
+    }
+    $('btn-compare').disabled = !(state.fileA && state.fileB);
+  }
+
+  function resetAll() {
+    state.fileA = state.fileB = state.zipA = state.zipB = state.objA = state.objB = null;
+    for (const s of ['a', 'b']) {
+      $(`input-${s}`).value = '';
+      $(`file-name-${s}`).textContent = '';
+      $(`slicer-info-${s}`).textContent = '';
+      $(`zone-${s}`).classList.remove('filled');
+    }
+    $('results').style.display = 'none';
+    $('error-banner').style.display = 'none';
+    $('status-msg').textContent = '';
+    $('btn-compare').disabled = true;
+    for (const t of ['settings', 'printer', 'filaments']) {
+      const b = $(`badge-${t}`); if (b) b.textContent = '—';
+      const p = $(`panel-${t}`); if (p) p.textContent = '';
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Main comparison
+  // ═══════════════════════════════════════════════════════════════════
+  async function runComparison() {
+    if (typeof JSZip === 'undefined') {
+      showError('Could not load JSZip library. Check your internet connection and reload.');
+      return;
+    }
+    $('error-banner').style.display = 'none';
+    $('results').style.display = 'none';
+    setLoading(true);
+
+    try {
+      const [zipA, zipB] = await Promise.all([loadZip(state.fileA), loadZip(state.fileB)]);
+      state.zipA = zipA;
+      state.zipB = zipB;
+
+      // Detect slicers in background
+      detectSlicer(zipA).then(info => {
+        $('slicer-info-a').textContent = info.version ? `${info.name} ${info.version}` : info.name;
+      });
+      detectSlicer(zipB).then(info => {
+        $('slicer-info-b').textContent = info.version ? `${info.name} ${info.version}` : info.name;
+      });
+
+      // Load settings JSON for both files
+      const [textA, textB] = await Promise.all([
+        readZipText(zipA, 'Metadata/project_settings.config'),
+        readZipText(zipB, 'Metadata/project_settings.config'),
+      ]);
+      state.objA = parseJSON(textA);
+      state.objB = parseJSON(textB);
+
+      const allRows = computeAllSettings(state.objA, state.objB);
+      const diffCount         = allRows.filter(r => r.differs).length;
+      const printerDiffCount  = buildPrinterProfileRows(state.objA, state.objB).filter(r => !r.isSection && r.differs).length;
+      const filamentDiffCount = buildFilamentRows(state.objA, state.objB).filter(r => !r.isSection && r.differs).length;
+
+      // Render compare header
+      const hdr = $('compare-header');
+      hdr.textContent = '';
+      hdr.appendChild(document.createTextNode('Comparing '));
+      hdr.appendChild(mkEl('strong', { textContent: state.fileA.name }));
+      hdr.appendChild(document.createTextNode(' vs '));
+      hdr.appendChild(mkEl('strong', { textContent: state.fileB.name }));
+
+      // Render all tabs
+      renderSettingsTab(allRows, !textA, !textB, state.fileA.name, state.fileB.name);
+      renderPrinterTab(state.objA, state.objB);
+      renderFilamentsTab(state.objA, state.objB);
+
+      updateBadge('settings',  diffCount);
+      updateBadge('printer',   printerDiffCount);
+      updateBadge('filaments', filamentDiffCount);
+
+      // Auto-activate tab with the most diffs
+      const best = [
+        ['settings',  diffCount],
+        ['printer',   printerDiffCount],
+        ['filaments', filamentDiffCount],
+      ].sort((a, b) => b[1] - a[1])[0][0];
+      switchTab(best);
+
+      $('results').style.display = 'block';
+      $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (err) {
+      showError(err.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+      $('btn-compare').disabled = !(state.fileA && state.fileB);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Init
+  // ═══════════════════════════════════════════════════════════════════
+  function initDragDrop(zoneEl, slot) {
+    zoneEl.addEventListener('dragover', e => { e.preventDefault(); zoneEl.classList.add('drag-over'); });
+    zoneEl.addEventListener('dragleave', e => { if (!zoneEl.contains(e.relatedTarget)) zoneEl.classList.remove('drag-over'); });
+    zoneEl.addEventListener('drop', e => {
+      e.preventDefault();
+      zoneEl.classList.remove('drag-over');
+      const file = e.dataTransfer?.files[0];
+      if (file) onFileSelected(slot, file);
+    });
+  }
+
+  function init() {
+    initDragDrop($('zone-a'), 'A');
+    initDragDrop($('zone-b'), 'B');
+    $('input-a').addEventListener('change', e => onFileSelected('A', e.target.files[0]));
+    $('input-b').addEventListener('change', e => onFileSelected('B', e.target.files[0]));
+    $('btn-compare').addEventListener('click', runComparison);
+    $('btn-reset').addEventListener('click', resetAll);
+    $('error-close').addEventListener('click', () => { $('error-banner').style.display = 'none'; });
+    for (const btn of document.querySelectorAll('.tab-btn'))
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    const jumpBtn = $('jump-top');
+    window.addEventListener('scroll', () => { jumpBtn.classList.toggle('visible', window.scrollY > 400); }, { passive: true });
+    jumpBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>

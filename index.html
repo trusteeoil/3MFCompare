@@ -8,20 +8,19 @@
   <meta name="description" content="Free browser-based tool to compare two 3MF files and see exactly which slicer settings differ. Supports BambuStudio and OrcaSlicer. Everything runs locally — your files never leave your device.">
   <style>
     :root {
-      --bg: #f8fafc;
+      --bg: #f0f2f5;
       --surface: #ffffff;
       --border: #e2e8f0;
       --text: #1e293b;
       --text-muted: #64748b;
       --accent: #2563eb;
       --accent-hover: #1d4ed8;
-      --diff-bg: #fef3c7;
+      --diff-bg: #fff8e1;
       --diff-text: #92400e;
       --badge-bg: #e2e8f0;
       --badge-text: #475569;
       --badge-active-bg: #f59e0b;
       --badge-active-text: #ffffff;
-      --tab-active-border: #2563eb;
       --drop-border: #cbd5e1;
       --drop-border-hover: #2563eb;
       --drop-bg: #f1f5f9;
@@ -37,26 +36,31 @@
       --info-border: #bfdbfe;
       --info-text: #1d4ed8;
       --identical-text: #94a3b8;
-      --section-header-bg: #f1f5f9;
-      --section-header-text: #475569;
+      --panel-bg: #f5f5f5;
+      --section-bg: #ffffff;
+      --section-border: #e0e0e0;
+      --section-hdr-bg: #ffffff;
+      --row-alt: #fafafa;
+      --row-hover: #f4f8ff;
+      --col-hdr-bg: #f0f0f0;
+      --col-hdr-text: #888;
       --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #0f172a;
-        --surface: #1e293b;
+        --surface: #1a2236;
         --border: #334155;
         --text: #f1f5f9;
         --text-muted: #94a3b8;
         --accent: #3b82f6;
         --accent-hover: #60a5fa;
-        --diff-bg: #451a03;
+        --diff-bg: #3d2e00;
         --diff-text: #fcd34d;
         --badge-bg: #334155;
         --badge-text: #94a3b8;
         --badge-active-bg: #d97706;
         --badge-active-text: #ffffff;
-        --tab-active-border: #3b82f6;
         --drop-border: #475569;
         --drop-border-hover: #3b82f6;
         --drop-bg: #1e293b;
@@ -72,8 +76,14 @@
         --info-border: #1e40af;
         --info-text: #93c5fd;
         --identical-text: #475569;
-        --section-header-bg: #1e293b;
-        --section-header-text: #94a3b8;
+        --panel-bg: #111827;
+        --section-bg: #1e293b;
+        --section-border: #2d3e55;
+        --section-hdr-bg: #1e293b;
+        --row-alt: #162032;
+        --row-hover: #1a2845;
+        --col-hdr-bg: #162032;
+        --col-hdr-text: #64748b;
       }
     }
 
@@ -84,81 +94,69 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding: 28px 16px 0;
       line-height: 1.6;
     }
 
-    #app { max-width: 1100px; margin: 0 auto; }
-
-    /* ── Header ── */
-    #header { text-align: center; margin-bottom: 28px; }
-    #header h1 { font-size: 1.875rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
-    #header .tagline { color: var(--text-muted); font-size: 0.9375rem; margin-bottom: 14px; }
-
-    .header-meta {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
+    /* ── App chrome header (dark navy like Bambu Studio) ── */
+    #app-header {
+      background: #1e2530;
+      color: #e8eaf0;
+      padding: 20px 24px 0;
     }
+    #app-header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    #header { text-align: center; padding-bottom: 20px; }
+    #header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px; color: #fff; }
+    #header .tagline { color: #9ba3b2; font-size: 0.9rem; margin-bottom: 14px; }
+
+    .header-meta { display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .header-meta-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.875rem;
-      color: var(--text-muted);
-      line-height: 1.4;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.8125rem; color: #8892a4; line-height: 1.4;
     }
     .header-meta-item::before {
-      content: '';
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: currentColor;
-      opacity: 0.45;
-      flex-shrink: 0;
+      content: ''; width: 3px; height: 3px; border-radius: 50%;
+      background: currentColor; opacity: 0.6; flex-shrink: 0;
     }
 
-    /* ── Drop zones ── */
+    /* ── Drop zones (inside dark header) ── */
     #drop-zone-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 20px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+      padding: 16px 0 20px;
     }
     @media (max-width: 560px) { #drop-zone-row { grid-template-columns: 1fr; } }
 
     .drop-zone {
-      border: 2px dashed var(--drop-border);
-      border-radius: 12px;
-      background: var(--drop-bg);
-      padding: 26px 20px;
+      border: 2px dashed #3a4458;
+      border-radius: 10px;
+      background: #242d3d;
+      padding: 20px 18px;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.15s, background 0.15s;
       position: relative;
     }
     .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--drop-border-hover);
-      background: var(--drop-bg-hover);
+      border-color: var(--accent);
+      background: #1e3060;
     }
     .drop-zone.filled {
       border-style: solid;
-      border-color: var(--drop-border-filled);
-      background: var(--drop-bg-filled);
+      border-color: #16a34a;
+      background: #0d2a18;
     }
     .drop-zone input[type="file"] { position: absolute; opacity: 0; width: 0; height: 0; }
-    .drop-zone label {
-      display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer;
-    }
-    .zone-icon { font-size: 1.875rem; line-height: 1; }
-    .zone-title { font-size: 1rem; font-weight: 600; }
-    .zone-hint { font-size: 0.8125rem; color: var(--text-muted); }
-    .file-name { margin-top: 10px; font-size: 0.875rem; font-weight: 600; color: var(--drop-border-filled); word-break: break-all; min-height: 1.3em; }
-    .slicer-info { font-size: 0.8125rem; color: var(--text-muted); min-height: 1.2em; margin-top: 2px; }
+    .drop-zone label { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+    .zone-icon { font-size: 1.625rem; line-height: 1; }
+    .zone-title { font-size: 0.9375rem; font-weight: 600; color: #d0d6e0; }
+    .zone-hint { font-size: 0.8rem; color: #6b7585; }
+    .file-name { margin-top: 8px; font-size: 0.8125rem; font-weight: 600; color: #4ade80; word-break: break-all; min-height: 1.2em; }
+    .slicer-info { font-size: 0.75rem; color: #6b7585; min-height: 1.1em; margin-top: 2px; }
 
-    /* ── Action row ── */
-    #action-row { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 28px; }
+    /* ── Action row (still in dark header) ── */
+    #action-row { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-bottom: 20px; }
     #action-buttons { display: flex; gap: 10px; }
 
     button {
@@ -166,92 +164,247 @@
       border: none; border-radius: 8px; cursor: pointer;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
     }
-    #btn-compare { background: var(--accent); color: #fff; padding: 10px 32px; }
+    #btn-compare { background: var(--accent); color: #fff; padding: 9px 28px; }
     #btn-compare:hover:not(:disabled) { background: var(--accent-hover); }
-    #btn-compare:disabled { background: var(--btn-disabled-bg); color: var(--btn-disabled-text); cursor: not-allowed; }
-    #btn-reset { background: transparent; color: var(--text-muted); padding: 10px 18px; border: 1px solid var(--border); }
-    #btn-reset:hover { color: var(--text); border-color: var(--text-muted); }
+    #btn-compare:disabled { background: #2d3748; color: #4a5568; cursor: not-allowed; }
+    #btn-reset { background: transparent; color: #8892a4; padding: 9px 18px; border: 1px solid #3a4458; border-radius: 8px; }
+    #btn-reset:hover { color: #d0d6e0; border-color: #5a6478; }
 
     /* ── Spinner ── */
-    #status-msg { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--text-muted); min-height: 24px; }
-    .spinner { width: 18px; height: 18px; flex-shrink: 0; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    #status-msg { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: #8892a4; min-height: 22px; }
+    .spinner { width: 16px; height: 16px; flex-shrink: 0; border: 2px solid #3a4458; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Error banner ── */
-    #error-banner { background: var(--error-bg); border: 1px solid var(--error-border); color: var(--error-text); border-radius: 8px; padding: 12px 16px; font-size: 0.875rem; display: none; align-items: flex-start; gap: 8px; margin-bottom: 16px; }
+    /* ── Error / info banners ── */
+    #error-banner { background: var(--error-bg); border: 1px solid var(--error-border); color: var(--error-text); border-radius: 8px; padding: 11px 14px; font-size: 0.875rem; display: none; align-items: flex-start; gap: 8px; margin: 12px 24px 0; }
     #error-close { margin-left: auto; background: none; color: var(--error-text); font-size: 1.25rem; font-weight: 400; padding: 0 2px; line-height: 1; border: none; cursor: pointer; flex-shrink: 0; }
+    .info-banner { background: var(--info-bg); border: 1px solid var(--info-border); color: var(--info-text); border-radius: 8px; padding: 10px 14px; font-size: 0.8125rem; margin: 0 0 0; }
 
-    /* ── Info banner ── */
-    .info-banner { background: var(--info-bg); border: 1px solid var(--info-border); color: var(--info-text); border-radius: 8px; padding: 10px 14px; font-size: 0.8125rem; margin-bottom: 12px; }
+    /* ── Main content area ── */
+    #main-wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
     /* ── Results card ── */
-    #results { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 48px; }
+    #results {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0 48px;
+    }
 
-    #compare-header { padding: 13px 20px; border-bottom: 1px solid var(--border); font-size: 0.875rem; color: var(--text-muted); }
+    #compare-header {
+      padding: 11px 18px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      background: var(--surface);
+    }
 
-    /* ── Tabs ── */
-    #tab-bar { display: flex; border-bottom: 1px solid var(--border); padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
-    #tab-bar::-webkit-scrollbar { display: none; }
-    .tab-btn { background: none; color: var(--text-muted); padding: 11px 14px; font-size: 0.875rem; font-weight: 500; border-bottom: 2px solid transparent; border-radius: 0; white-space: nowrap; display: flex; align-items: center; gap: 6px; margin-bottom: -1px; }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active { color: var(--accent); border-bottom-color: var(--tab-active-border); }
-    .badge { font-size: 0.75rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--badge-bg); color: var(--badge-text); }
-    .badge.has-diffs { background: var(--badge-active-bg); color: var(--badge-active-text); }
+    /* ── Slicer-style tab bar ── */
+    #tab-bar-wrap {
+      background: #f0f0f0;
+      border-bottom: 1px solid #ddd;
+      padding: 0 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      #tab-bar-wrap { background: #162032; border-bottom-color: #2d3e55; }
+    }
+    #tab-bar-wrap::-webkit-scrollbar { display: none; }
+    #tab-bar { display: flex; gap: 2px; padding: 8px 0 0; }
 
-    /* ── Tab panels ── */
-    .tab-panel { display: none; padding: 20px; }
-    .tab-panel.active { display: block; }
+    .tab-btn {
+      background: transparent;
+      color: #555;
+      padding: 7px 16px 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+      margin-bottom: -1px;
+      position: relative;
+    }
+    .tab-btn:hover { background: rgba(0,0,0,0.06); color: #222; }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+    @media (prefers-color-scheme: dark) {
+      .tab-btn { color: #8892a4; }
+      .tab-btn:hover { background: rgba(255,255,255,0.07); color: #d0d6e0; }
+      .tab-btn.active { background: var(--accent); color: #fff; }
+    }
+    .badge {
+      font-size: 0.7rem; font-weight: 700; padding: 1px 6px;
+      border-radius: 999px; background: rgba(0,0,0,0.15); color: inherit;
+      opacity: 0.85;
+    }
+    .tab-btn.active .badge { background: rgba(255,255,255,0.25); color: #fff; opacity: 1; }
+    .badge.has-diffs { background: #f59e0b; color: #fff; opacity: 1; }
+    .tab-btn.active .badge.has-diffs { background: rgba(255,255,255,0.3); color: #fff; }
 
-    /* ── Panel header ── */
-    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
-    .panel-title { font-size: 0.875rem; font-weight: 600; color: var(--text-muted); }
-    .panel-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    /* ── Persistent toolbar (search + toggle + copy) ── */
+    #toolbar {
+      display: none;
+      padding: 9px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    #toolbar.visible { display: flex; }
 
-    /* ── Search box ── */
     .search-wrap { position: relative; }
-    .search-wrap::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 0.875rem; pointer-events: none; }
+    .search-wrap::before {
+      content: '🔍'; position: absolute; left: 9px; top: 50%;
+      transform: translateY(-50%); font-size: 0.8rem; pointer-events: none;
+    }
     #search-input {
-      font-family: inherit; font-size: 0.875rem; padding: 6px 10px 6px 32px;
-      border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text);
-      outline: none; width: 220px;
-      transition: border-color 0.15s;
+      font-family: inherit; font-size: 0.8125rem; padding: 5px 9px 5px 28px;
+      border: 1px solid var(--border); border-radius: 7px;
+      background: var(--bg); color: var(--text);
+      outline: none; width: 200px; transition: border-color 0.15s;
     }
     #search-input:focus { border-color: var(--accent); }
     #search-input::placeholder { color: var(--text-muted); }
 
-    /* ── Action buttons ── */
+    .seg-toggle { display: flex; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 2px; gap: 2px; }
+    .seg-btn {
+      background: none; color: var(--text-muted); padding: 3px 11px;
+      font-size: 0.8rem; font-weight: 500; border-radius: 5px; border: none;
+      cursor: pointer; transition: background 0.12s, color 0.12s; white-space: nowrap;
+    }
+    .seg-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+    @media (prefers-color-scheme: dark) { .seg-btn.active { background: var(--border); } }
+
     .action-btn {
       background: transparent; color: var(--text-muted); border: 1px solid var(--border);
-      padding: 5px 12px; font-size: 0.8125rem; font-weight: 500; border-radius: 6px;
+      padding: 4px 11px; font-size: 0.8rem; font-weight: 500; border-radius: 6px;
     }
     .action-btn:hover { color: var(--text); border-color: var(--text-muted); }
-    .action-btn.done { color: var(--drop-border-filled); border-color: var(--drop-border-filled); }
+    .action-btn.done { color: #16a34a; border-color: #16a34a; }
 
-    /* ── Tables ── */
-    .diff-table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
-    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-    th { background: var(--bg); color: var(--text-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
-    td { padding: 8px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
-    tr:last-child td { border-bottom: none; }
-    tr.diff-row td { background: var(--diff-bg); }
-    tr.identical-row td { color: var(--identical-text); }
-    tr.hidden-row { display: none; }
-
-    /* Section header rows inside tables */
-    tr.section-row td {
-      background: var(--section-header-bg);
-      color: var(--section-header-text);
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 6px 14px;
-      border-bottom: 1px solid var(--border);
+    #toolbar-diff-count {
+      font-size: 0.8125rem; color: var(--text-muted); margin-left: auto; white-space: nowrap;
     }
 
-    .key-cell { font-family: var(--mono); font-size: 0.8125rem; word-break: break-all; }
-    .label-cell { font-size: 0.875rem; color: var(--text); }
-    .value-cell { font-family: var(--mono); font-size: 0.8125rem; word-break: break-all; white-space: pre-wrap; }
+    /* ── Tab panels ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Slicer-style settings panel ── */
+    .settings-panel {
+      background: var(--panel-bg);
+      min-height: 200px;
+      padding-bottom: 16px;
+    }
+
+    /* Sticky column headers inside the settings panel */
+    .col-headers {
+      display: grid;
+      grid-template-columns: minmax(200px, 2.2fr) 1fr 1fr;
+      padding: 6px 14px;
+      background: var(--col-hdr-bg);
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--col-hdr-text);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--section-border);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    /* Section block — white card */
+    .section-block {
+      margin: 10px 14px 0;
+      background: var(--section-bg);
+      border: 1px solid var(--section-border);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 13px;
+      background: var(--section-hdr-bg);
+      font-weight: 700;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid var(--section-border);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.1s;
+    }
+    .section-header:hover { background: var(--row-hover); }
+
+    .section-icon { font-size: 0.9rem; opacity: 0.7; flex-shrink: 0; }
+    .section-title { flex: 1; }
+    .section-diff-badge {
+      font-size: 0.7rem; font-weight: 700; padding: 1px 6px;
+      border-radius: 999px; background: #f59e0b; color: #fff;
+    }
+    .collapse-arrow {
+      font-size: 0.65rem; color: var(--text-muted);
+      transition: transform 0.15s; flex-shrink: 0; margin-left: 2px;
+    }
+    .section-block.collapsed .collapse-arrow { transform: rotate(-90deg); }
+    .section-body { display: block; }
+    .section-block.collapsed .section-body { display: none; }
+
+    /* Setting row — 3-column CSS grid */
+    .setting-row {
+      display: grid;
+      grid-template-columns: minmax(200px, 2.2fr) 1fr 1fr;
+      border-bottom: 1px solid #f0f0f0;
+      align-items: stretch;
+      transition: background 0.08s;
+    }
+    @media (prefers-color-scheme: dark) {
+      .setting-row { border-bottom-color: #243040; }
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-row:nth-child(even) { background: var(--row-alt); }
+    .setting-row.diff-row { background: var(--diff-bg) !important; }
+    .setting-row:hover { background: var(--row-hover) !important; }
+    .setting-row.hidden-row { display: none; }
+
+    .setting-label {
+      padding: 7px 13px;
+      font-size: 0.8125rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      border-right: 1px solid #f0f0f0;
+    }
+    @media (prefers-color-scheme: dark) { .setting-label { border-right-color: #243040; } }
+
+    .setting-val {
+      padding: 7px 12px;
+      font-family: var(--mono);
+      font-size: 0.775rem;
+      word-break: break-all;
+      white-space: pre-wrap;
+      display: flex;
+      align-items: center;
+      border-right: 1px solid #f0f0f0;
+    }
+    @media (prefers-color-scheme: dark) { .setting-val { border-right-color: #243040; } }
+    .setting-val:last-child { border-right: none; }
+
     .diff-a { color: #dc2626; }
     .diff-b { color: #16a34a; }
     @media (prefers-color-scheme: dark) {
@@ -261,90 +414,148 @@
 
     /* Color swatch */
     .color-swatch {
-      display: inline-block; width: 12px; height: 12px;
-      border-radius: 3px; border: 1px solid rgba(0,0,0,0.15);
+      display: inline-block; width: 11px; height: 11px;
+      border-radius: 3px; border: 1px solid rgba(0,0,0,0.18);
       vertical-align: middle; margin-right: 5px; flex-shrink: 0;
     }
     .color-val-wrap { display: flex; align-items: center; }
 
     /* Collapsible long values */
-    details summary { cursor: pointer; color: var(--accent); font-size: 0.8125rem; user-select: none; list-style: none; }
-    details summary::before { content: '▶ '; font-size: 0.65rem; }
+    details summary { cursor: pointer; color: var(--accent); font-size: 0.775rem; user-select: none; list-style: none; }
+    details summary::before { content: '▶ '; font-size: 0.6rem; }
     details[open] summary::before { content: '▼ '; }
-    details pre { font-family: var(--mono); font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; background: var(--bg); padding: 8px 10px; border-radius: 6px; margin-top: 6px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); }
+    details pre { font-family: var(--mono); font-size: 0.7rem; white-space: pre-wrap; word-break: break-all; background: var(--bg); padding: 7px 9px; border-radius: 5px; margin-top: 5px; max-height: 180px; overflow-y: auto; border: 1px solid var(--border); }
 
     /* Empty state */
-    .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
-    .empty-icon { font-size: 2.25rem; margin-bottom: 10px; }
-    .empty-state p { font-size: 0.9375rem; }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-icon { font-size: 2rem; margin-bottom: 8px; }
+    .empty-state p { font-size: 0.9rem; }
 
     /* ── SEO Footer ── */
     #seo-footer {
       border-top: 1px solid var(--border);
-      padding: 48px 20px 60px;
-      max-width: 1100px;
+      padding: 44px 20px 56px;
+      max-width: 1200px;
       margin: 0 auto;
     }
-    .seo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 32px; }
-    .seo-section h2 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
-    .seo-section p, .seo-section li { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; }
-    .seo-section ul { padding-left: 18px; }
+    .seo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px; }
+    .seo-section h2 { font-size: 0.9375rem; font-weight: 700; margin-bottom: 7px; color: var(--text); }
+    .seo-section p, .seo-section li { font-size: 0.875rem; color: var(--text-muted); line-height: 1.7; }
+    .seo-section ul { padding-left: 16px; }
     .seo-section li { margin-bottom: 3px; }
-    .seo-bottom { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 0.8125rem; color: var(--text-muted); text-align: center; }
+    .seo-bottom { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-muted); text-align: center; }
 
-    /* ── View-mode segmented toggle ── */
-    .seg-toggle { display: flex; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
-    .seg-btn { background: none; color: var(--text-muted); padding: 4px 12px; font-size: 0.8125rem; font-weight: 500; border-radius: 6px; border: none; cursor: pointer; transition: background 0.12s, color 0.12s; white-space: nowrap; }
-    .seg-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
-    @media (prefers-color-scheme: dark) { .seg-btn.active { background: var(--border); } }
+    /* ── Search dropdown ── */
+    #search-dropdown {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      min-width: 380px;
+      max-width: 520px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.13);
+      z-index: 200;
+      overflow: hidden;
+      display: none;
+    }
+    #search-dropdown.visible { display: block; }
+    .search-result-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      cursor: pointer;
+      gap: 9px;
+      border-bottom: 1px solid var(--border);
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover,
+    .search-result-item.focused { background: var(--row-hover); }
+    .search-result-label { flex: 1; font-size: 0.8125rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .search-result-crumb {
+      font-size: 0.7rem; color: var(--text-muted); white-space: nowrap;
+      background: var(--bg); padding: 2px 7px; border-radius: 999px;
+      border: 1px solid var(--border); flex-shrink: 0;
+    }
+    .search-result-diff-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #f59e0b; flex-shrink: 0;
+    }
+    .search-result-empty {
+      padding: 10px 14px; font-size: 0.8125rem; color: var(--text-muted); text-align: center;
+    }
+
+    /* Highlight flash when navigating to a row */
+    @keyframes highlight-flash {
+      0%   { background: #bfdbfe !important; outline: 2px solid var(--accent); outline-offset: -1px; }
+      60%  { background: #bfdbfe !important; outline: 2px solid var(--accent); outline-offset: -1px; }
+      100% { background: revert; outline: none; }
+    }
+    @media (prefers-color-scheme: dark) {
+      @keyframes highlight-flash {
+        0%   { background: #1e3a5f !important; outline: 2px solid var(--accent); outline-offset: -1px; }
+        60%  { background: #1e3a5f !important; outline: 2px solid var(--accent); outline-offset: -1px; }
+        100% { background: revert; outline: none; }
+      }
+    }
+    .setting-row.highlight-row { animation: highlight-flash 1.8s ease forwards; }
 
     /* Jump to top */
-    #jump-top { position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: #fff; border-radius: 8px; padding: 8px 14px; font-size: 0.8125rem; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.2s; border: none; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    #jump-top { position: fixed; bottom: 22px; right: 22px; background: var(--accent); color: #fff; border-radius: 8px; padding: 7px 13px; font-size: 0.8rem; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.2s; border: none; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
     #jump-top.visible { opacity: 1; pointer-events: auto; }
   </style>
 </head>
 <body>
-<div id="app">
 
-  <div id="header">
-    <h1>3MF Compare Tool</h1>
-    <p class="tagline">See exactly which slicer settings differ between two .3mf files — instantly, in your browser.</p>
-    <div class="header-meta">
-      <span class="header-meta-item">Built for BambuStudio &amp; OrcaSlicer — also works with Elegoo, other OrcaSlicer forks, and PrusaSlicer-based slicers (settings names may differ slightly)</span>
-      <span class="header-meta-item">Runs 100% locally in your browser — your files never leave your device</span>
-    </div>
-  </div>
+<!-- Dark navy header area (Bambu Studio style app chrome) -->
+<div id="app-header">
+  <div id="app-header-inner">
 
-  <div id="drop-zone-row">
-    <div class="drop-zone" id="zone-a">
-      <input type="file" id="input-a" accept=".3mf">
-      <label for="input-a">
-        <span class="zone-icon">📂</span>
-        <span class="zone-title">File A</span>
-        <span class="zone-hint">Drop a .3mf file here, or click to browse</span>
-      </label>
-      <p class="file-name" id="file-name-a"></p>
-      <p class="slicer-info" id="slicer-info-a"></p>
+    <div id="header">
+      <h1>3MF Compare Tool</h1>
+      <p class="tagline">See exactly which slicer settings differ between two .3mf files — instantly, in your browser.</p>
+      <div class="header-meta">
+        <span class="header-meta-item">Built for BambuStudio &amp; OrcaSlicer — also works with Elegoo, other OrcaSlicer forks, and PrusaSlicer-based slicers</span>
+        <span class="header-meta-item">Runs 100% locally in your browser — your files never leave your device</span>
+      </div>
     </div>
-    <div class="drop-zone" id="zone-b">
-      <input type="file" id="input-b" accept=".3mf">
-      <label for="input-b">
-        <span class="zone-icon">📂</span>
-        <span class="zone-title">File B</span>
-        <span class="zone-hint">Drop a .3mf file here, or click to browse</span>
-      </label>
-      <p class="file-name" id="file-name-b"></p>
-      <p class="slicer-info" id="slicer-info-b"></p>
-    </div>
-  </div>
 
-  <div id="action-row">
-    <div id="action-buttons">
-      <button id="btn-compare" disabled>Compare Files</button>
-      <button id="btn-reset">Reset</button>
+    <div id="drop-zone-row">
+      <div class="drop-zone" id="zone-a">
+        <input type="file" id="input-a" accept=".3mf">
+        <label for="input-a">
+          <span class="zone-icon">📂</span>
+          <span class="zone-title">File A</span>
+          <span class="zone-hint">Drop a .3mf file here, or click to browse</span>
+        </label>
+        <p class="file-name" id="file-name-a"></p>
+        <p class="slicer-info" id="slicer-info-a"></p>
+      </div>
+      <div class="drop-zone" id="zone-b">
+        <input type="file" id="input-b" accept=".3mf">
+        <label for="input-b">
+          <span class="zone-icon">📂</span>
+          <span class="zone-title">File B</span>
+          <span class="zone-hint">Drop a .3mf file here, or click to browse</span>
+        </label>
+        <p class="file-name" id="file-name-b"></p>
+        <p class="slicer-info" id="slicer-info-b"></p>
+      </div>
     </div>
-    <div id="status-msg"></div>
-  </div>
+
+    <div id="action-row">
+      <div id="action-buttons">
+        <button id="btn-compare" disabled>Compare Files</button>
+        <button id="btn-reset">Reset</button>
+      </div>
+      <div id="status-msg"></div>
+    </div>
+
+  </div><!-- /#app-header-inner -->
+</div><!-- /#app-header -->
+
+<div id="main-wrap">
 
   <div id="error-banner">
     <span id="error-text"></span>
@@ -353,25 +564,57 @@
 
   <div id="results">
     <div id="compare-header"></div>
-    <div id="tab-bar">
-      <button class="tab-btn active" data-tab="settings">
-        Settings Differences <span class="badge" id="badge-settings">—</span>
-      </button>
-      <button class="tab-btn" data-tab="printer">
-        Printer &amp; Profile <span class="badge" id="badge-printer">—</span>
-      </button>
-      <button class="tab-btn" data-tab="filaments">
-        Filaments <span class="badge" id="badge-filaments">—</span>
-      </button>
+
+    <!-- Persistent toolbar (above tabs so user fills in search then picks tab) -->
+    <div id="toolbar">
+      <div class="search-wrap">
+        <input id="search-input" type="text" placeholder="Search all settings…" autocomplete="off">
+        <div id="search-dropdown"></div>
+      </div>
+      <div class="seg-toggle">
+        <button class="seg-btn active" id="btn-diffs-only">Differences only</button>
+        <button class="seg-btn" id="btn-all-settings">All settings</button>
+      </div>
+      <button class="action-btn" id="btn-copy-md">Copy as Markdown Table</button>
+      <span id="toolbar-diff-count"></span>
     </div>
-    <div id="panel-settings"  class="tab-panel active"></div>
-    <div id="panel-printer"   class="tab-panel"></div>
+
+    <!-- Slicer-style tab bar -->
+    <div id="tab-bar-wrap">
+      <div id="tab-bar">
+        <button class="tab-btn active" data-tab="quality">
+          Quality <span class="badge" id="badge-quality">—</span>
+        </button>
+        <button class="tab-btn" data-tab="strength">
+          Strength <span class="badge" id="badge-strength">—</span>
+        </button>
+        <button class="tab-btn" data-tab="speed">
+          Speed <span class="badge" id="badge-speed">—</span>
+        </button>
+        <button class="tab-btn" data-tab="support">
+          Support <span class="badge" id="badge-support">—</span>
+        </button>
+        <button class="tab-btn" data-tab="others">
+          Others <span class="badge" id="badge-others">—</span>
+        </button>
+        <button class="tab-btn" data-tab="filaments">
+          Filaments <span class="badge" id="badge-filaments">—</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 6 tab panels (content injected by JS) -->
+    <div id="panel-quality"   class="tab-panel active"></div>
+    <div id="panel-strength"  class="tab-panel"></div>
+    <div id="panel-speed"     class="tab-panel"></div>
+    <div id="panel-support"   class="tab-panel"></div>
+    <div id="panel-others"    class="tab-panel"></div>
     <div id="panel-filaments" class="tab-panel"></div>
   </div>
 
-</div><!-- /#app -->
+</div><!-- /#main-wrap -->
 
-<!-- SEO footer — outside #app so it's always visible -->
+<!-- SEO footer — always visible -->
 <footer id="seo-footer">
   <div class="seo-grid">
     <div class="seo-section">
@@ -380,11 +623,11 @@
     </div>
     <div class="seo-section">
       <h2>Why compare 3MF files?</h2>
-      <p>When troubleshooting print quality or sharing settings on forums like Reddit, it's hard to know exactly what changed between two profiles. Your slicer doesn't offer a diff view. This tool does — showing changed slicer settings, your printer profile, and filament info all in one place. Built for BambuStudio and OrcaSlicer, but also works with Elegoo, other OrcaSlicer forks, and PrusaSlicer-based slicers.</p>
+      <p>When troubleshooting print quality or sharing settings on forums like Reddit, it's hard to know exactly what changed between two profiles. Your slicer doesn't offer a diff view. This tool does — organized by the same tabs as your slicer (Quality, Strength, Speed, Support, Others). Built for BambuStudio and OrcaSlicer, but also works with Elegoo, other OrcaSlicer forks, and PrusaSlicer-based slicers.</p>
     </div>
     <div class="seo-section">
       <h2>How does it work?</h2>
-      <p>A <code>.3mf</code> file is a ZIP archive. Inside is a <code>project_settings.config</code> JSON file containing all your slicer settings. This tool reads both files in your browser, parses the JSON, and shows only the differences in a searchable, copyable table.</p>
+      <p>A <code>.3mf</code> file is a ZIP archive. Inside is a <code>project_settings.config</code> JSON file containing all your slicer settings. This tool reads both files in your browser, parses the JSON, and shows only the differences organized in the same layout as your slicer.</p>
     </div>
     <div class="seo-section">
       <h2>Privacy &amp; Security</h2>
@@ -411,60 +654,314 @@
   'use strict';
 
   // ═══════════════════════════════════════════════════════════════════
-  //  Constants — curated keys for Printer Profile and Filaments tabs
+  //  Slicer schema — tabs → sections → [key, label] in Bambu Studio order
   // ═══════════════════════════════════════════════════════════════════
-
-  /** Keys shown in the "Printer Info" section of the Printer & Profile tab */
-  const PRINTER_INFO_KEYS = [
-    ['machine_type',      'Printer Model'],
-    ['printer_model',     'Printer Model (alt key)'],
-    ['nozzle_diameter',   'Nozzle Diameter (mm)'],
-    ['printable_area',    'Build Plate Area'],
-    ['max_print_height',  'Max Print Height (mm)'],
+  const SLICER_SCHEMA = [
+    {
+      id: 'quality', label: 'Quality',
+      sections: [
+        { label: 'Layer height', icon: '≡', keys: [
+          ['layer_height',            'Layer height'],
+          ['initial_layer_height',    'First layer height'],
+          ['adaptive_layer_height',   'Adaptive layer height'],
+          ['variable_layer_height',   'Variable layer height'],
+        ]},
+        { label: 'Line width', icon: '⊟', keys: [
+          ['line_width',                         'Default line width'],
+          ['initial_layer_line_width',           'First layer line width'],
+          ['outer_wall_line_width',              'Outer wall line width'],
+          ['inner_wall_line_width',              'Inner wall line width'],
+          ['top_surface_line_width',             'Top surface line width'],
+          ['infill_line_width',                  'Infill line width'],
+          ['internal_solid_infill_line_width',   'Internal solid infill line width'],
+          ['support_line_width',                 'Support line width'],
+        ]},
+        { label: 'Seam', icon: '◎', keys: [
+          ['seam_position',            'Seam position'],
+          ['seam_gap',                 'Seam gap'],
+          ['scarf_seam_enabled',       'Smart scarf seam'],
+          ['scarf_angle_threshold',    'Scarf application angle threshold'],
+          ['scarf_around_entire_wall', 'Scarf around entire wall'],
+          ['scarf_steps',              'Scarf steps'],
+          ['scarf_joint_inner_wall',   'Scarf joint for inner walls'],
+          ['wipe_speed',               'Wipe speed'],
+          ['role_based_wipe_speed',    'Role-based wipe speed'],
+        ]},
+        { label: 'Precision', icon: '⊕', keys: [
+          ['slice_closing_radius',           'Slice gap closing radius'],
+          ['resolution',                     'Resolution'],
+          ['arc_fitting',                    'Arc fitting'],
+          ['xy_hole_compensation',           'XY hole compensation'],
+          ['xy_contour_compensation',        'XY contour compensation'],
+          ['xy_size_compensation',           'XY size compensation'],
+          ['elefant_foot_compensation',      'Elephant foot compensation'],
+          ['elefant_foot_compensation_layers','Elephant foot compensation layers'],
+          ['precise_wall',                   'Precise wall'],
+          ['precise_z_height',               'Precise Z height'],
+          ['klipper_pressure_advance',       'Pressure advance'],
+          ['smooth_coefficient',             'Smooth coefficient'],
+        ]},
+        { label: 'Ironing', icon: '♨', keys: [
+          ['ironing_type',    'Ironing type'],
+          ['ironing_flow',    'Ironing flow'],
+          ['ironing_speed',   'Ironing speed'],
+          ['ironing_spacing', 'Ironing spacing'],
+          ['ironing_angle',   'Ironing angle'],
+          ['ironing_inset',   'Ironing inset'],
+        ]},
+        { label: 'Wall generator', icon: '▦', keys: [
+          ['wall_generator',       'Wall generator'],
+          ['wall_sequence',        'Wall ordering'],
+          ['is_infill_first',      'Infill before walls'],
+          ['outer_wall_speed',     'Outer wall speed (see Speed tab)'],
+        ]},
+      ],
+    },
+    {
+      id: 'strength', label: 'Strength',
+      sections: [
+        { label: 'Walls', icon: '▥', keys: [
+          ['wall_loops',              'Wall loops'],
+          ['extra_perimeters_on_overhangs', 'Extra perimeters on overhangs'],
+          ['detect_thin_wall',        'Detect thin wall'],
+          ['only_one_wall_top',       'One wall on top surfaces'],
+          ['only_one_wall_first_layer','One wall on first layer'],
+          ['minimum_wall_width',      'Minimum wall width'],
+          ['minimum_sparse_infill_area','Minimum sparse infill area'],
+        ]},
+        { label: 'Top/bottom shells', icon: '⊟', keys: [
+          ['interface_shells',               'Interface shells'],
+          ['top_surface_pattern',            'Top surface pattern'],
+          ['top_surface_density',            'Top surface density'],
+          ['top_shell_layers',               'Top shell layers'],
+          ['top_shell_thickness',            'Top shell thickness'],
+          ['bottom_surface_pattern',         'Bottom surface pattern'],
+          ['bottom_surface_density',         'Bottom surface density'],
+          ['bottom_shell_layers',            'Bottom shell layers'],
+          ['bottom_shell_thickness',         'Bottom shell thickness'],
+          ['internal_solid_infill_pattern',  'Internal solid infill pattern'],
+        ]},
+        { label: 'Sparse infill', icon: '⊞', keys: [
+          ['sparse_infill_density',   'Sparse infill density'],
+          ['fill_multiline',          'Fill multiline'],
+          ['sparse_infill_pattern',   'Sparse infill pattern'],
+          ['infill_anchor',           'Length of sparse infill anchor'],
+          ['infill_anchor_max',       'Max length of sparse infill anchor'],
+          ['infill_combination',      'Infill combination'],
+        ]},
+        { label: 'Advanced', icon: '⚙', keys: [
+          ['infill_wall_overlap',               'Infill/wall overlap'],
+          ['infill_direction',                  'Infill direction'],
+          ['bridge_direction',                  'Bridge direction'],
+          ['bridge_angle',                      'Bridge angle'],
+          ['ensure_vertical_shell_thickness',   'Ensure vertical shell thickness'],
+          ['detect_floating_vertical_shells',   'Detect floating vertical shells'],
+          ['detect_narrow_internal_solid_infill','Detect narrow internal solid infill'],
+          ['filter_out_gap_fill',               'Filter out tiny gaps'],
+          ['monotonic_line_travel_extend',      'Monotonic line travel extend'],
+        ]},
+      ],
+    },
+    {
+      id: 'speed', label: 'Speed',
+      sections: [
+        { label: 'Initial layer speed', icon: '◉', keys: [
+          ['initial_layer_speed',        'Initial layer speed'],
+          ['initial_layer_infill_speed', 'Initial layer infill speed'],
+        ]},
+        { label: 'Other layers speed', icon: '⟶', keys: [
+          ['outer_wall_speed',             'Outer wall speed'],
+          ['inner_wall_speed',             'Inner wall speed'],
+          ['small_perimeter_speed',        'Small perimeters speed'],
+          ['small_perimeter_threshold',    'Small perimeter threshold'],
+          ['sparse_infill_speed',          'Sparse infill speed'],
+          ['internal_solid_infill_speed',  'Internal solid infill speed'],
+          ['top_surface_speed',            'Top surface speed'],
+          ['bridge_speed',                 'Bridge speed'],
+          ['internal_bridge_speed',        'Internal bridge speed'],
+          ['gap_infill_speed',             'Gap infill speed'],
+          ['support_speed',                'Support speed'],
+          ['support_interface_speed',      'Support interface speed'],
+          ['overhang_1_4_speed',           'Overhang speed (25%)'],
+          ['overhang_2_4_speed',           'Overhang speed (50%)'],
+          ['overhang_3_4_speed',           'Overhang speed (75%)'],
+          ['overhang_4_4_speed',           'Overhang speed (100%)'],
+          ['slow_down_for_overhang',       'Slow down for overhangs'],
+        ]},
+        { label: 'Travel speed', icon: '↗', keys: [
+          ['travel_speed',           'Travel speed'],
+          ['travel_speed_z',         'Z travel speed'],
+        ]},
+        { label: 'Acceleration', icon: '⚡', keys: [
+          ['default_acceleration',         'Normal printing acceleration'],
+          ['travel_acceleration',          'Travel acceleration'],
+          ['initial_layer_travel_acceleration','Initial layer travel acceleration'],
+          ['initial_layer_acceleration',   'Initial layer acceleration'],
+          ['outer_wall_acceleration',      'Outer wall acceleration'],
+          ['inner_wall_acceleration',      'Inner wall acceleration'],
+          ['top_surface_acceleration',     'Top surface acceleration'],
+          ['sparse_infill_acceleration',   'Sparse infill acceleration'],
+          ['internal_solid_infill_acceleration','Internal solid infill acceleration'],
+          ['bridge_acceleration',          'Bridge acceleration'],
+          ['short_travel_acceleration',    'Short travel acceleration'],
+        ]},
+        { label: 'Jerk', icon: '≈', keys: [
+          ['default_jerk',         'Default jerk'],
+          ['outer_wall_jerk',      'Outer wall jerk'],
+          ['inner_wall_jerk',      'Inner wall jerk'],
+          ['top_surface_jerk',     'Top surface jerk'],
+          ['infill_jerk',          'Infill jerk'],
+          ['travel_jerk',          'Travel jerk'],
+          ['initial_layer_jerk',   'Initial layer jerk'],
+        ]},
+      ],
+    },
+    {
+      id: 'support', label: 'Support',
+      sections: [
+        { label: 'Support', icon: '⊓', keys: [
+          ['enable_support',              'Enable support'],
+          ['support_type',                'Support type'],
+          ['support_style',               'Support style'],
+          ['support_threshold_angle',     'Threshold angle'],
+          ['support_on_build_plate_only', 'On build plate only'],
+          ['remove_small_overhangs',      'Remove small overhangs'],
+          ['support_critical_regions_only','Critical regions only'],
+        ]},
+        { label: 'Raft', icon: '▬', keys: [
+          ['raft_layers',      'Raft layers'],
+          ['raft_first_layer_density','Raft first layer density'],
+          ['raft_first_layer_expansion','Raft first layer expansion'],
+          ['raft_contact_distance','Raft contact distance'],
+          ['raft_expansion',   'Raft expansion'],
+        ]},
+        { label: 'Filament for supports', icon: '◈', keys: [
+          ['support_filament',           'Support/raft base filament'],
+          ['support_interface_filament', 'Support/raft interface filament'],
+        ]},
+        { label: 'Advanced', icon: '⚙', keys: [
+          ['support_base_pattern',              'Base pattern'],
+          ['support_base_pattern_spacing',      'Base pattern spacing'],
+          ['support_angle',                     'Pattern angle'],
+          ['support_top_z_distance',            'Top Z distance'],
+          ['support_bottom_z_distance',         'Bottom Z distance'],
+          ['support_wall_count',                'Support wall loops'],
+          ['support_interface_top_layers',      'Top interface layers'],
+          ['support_interface_bottom_layers',   'Bottom interface layers'],
+          ['support_interface_pattern',         'Interface pattern'],
+          ['support_interface_spacing',         'Top interface spacing'],
+          ['support_bottom_interface_spacing',  'Bottom interface spacing'],
+          ['support_expansion',                 'Normal support expansion'],
+          ['support_object_xy_distance',        'Support/object XY distance'],
+          ['support_z_overrides_xy',            'Z overrides XY'],
+          ['support_object_first_layer_gap',    'First layer gap'],
+          ['dont_support_bridges',              'Don\'t support bridges'],
+          ['independent_support_layer_height',  'Independent support layer height'],
+          ['tree_support_branch_angle',         'Tree branch angle'],
+          ['tree_support_wall_count',           'Tree wall count'],
+          ['tree_support_with_infill',          'Tree with infill'],
+        ]},
+      ],
+    },
+    {
+      id: 'others', label: 'Others',
+      sections: [
+        { label: 'Bed adhesion', icon: '▭', keys: [
+          ['skirt_loops',        'Skirt loops'],
+          ['skirt_height',       'Skirt height'],
+          ['skirt_distance',     'Skirt distance'],
+          ['brim_type',          'Brim type'],
+          ['brim_width',         'Brim width'],
+          ['brim_object_gap',    'Brim object gap'],
+          ['brim_ears',          'Brim ears'],
+          ['brim_ears_max_angle','Brim ears max angle'],
+        ]},
+        { label: 'Prime tower', icon: '⬡', keys: [
+          ['enable_prime_tower',         'Enable prime tower'],
+          ['prime_tower_skip_points',    'Skip points'],
+          ['prime_tower_internal_ribs',  'Internal ribs'],
+          ['prime_tower_width',          'Width'],
+          ['prime_tower_max_speed',      'Max speed'],
+          ['prime_tower_brim_width',     'Brim width'],
+          ['prime_tower_infill_gap',     'Infill gap'],
+          ['prime_tower_rib_wall',       'Rib wall'],
+          ['prime_tower_fillet_wall',    'Fillet wall'],
+          ['flush_into_infill',          'Purge into objects\' infill'],
+          ['flush_into_support',         'Purge into objects\' support'],
+          ['flush_into_objects',         'Purge into objects'],
+        ]},
+        { label: 'Special mode', icon: '★', keys: [
+          ['slicing_mode',      'Slicing mode'],
+          ['print_sequence',    'Print sequence'],
+          ['spiral_mode',       'Spiral vase'],
+          ['timelapse_type',    'Timelapse'],
+          ['fuzzy_skin',        'Fuzzy skin'],
+          ['fuzzy_skin_thickness','Fuzzy skin thickness'],
+          ['fuzzy_skin_point_distance','Fuzzy skin point distance'],
+        ]},
+        { label: 'G-code output', icon: '⌨', keys: [
+          ['reduce_infill_retraction',  'Reduce infill retraction'],
+          ['gcode_add_line_number',     'Add line number'],
+          ['filename_format',           'Filename format'],
+          ['post_process',              'Post-processing scripts'],
+          ['gcode_comments',            'G-code comments'],
+          ['gcode_label_objects',       'Label objects'],
+          ['exclude_object',            'Exclude objects'],
+        ]},
+        { label: 'Printer info', icon: '🖨', keys: [
+          ['machine_type',      'Printer model'],
+          ['printer_model',     'Printer model (alt)'],
+          ['nozzle_diameter',   'Nozzle diameter'],
+          ['printable_area',    'Build plate area'],
+          ['max_print_height',  'Max print height'],
+          ['print_settings_id', 'Print profile name'],
+          ['printer_settings_id','Printer settings ID'],
+        ]},
+      ],
+    },
   ];
 
-  /** Keys shown in the "Print Quality" section of the Printer & Profile tab */
-  const PRINT_QUALITY_KEYS = [
-    ['print_settings_id',            'Print Profile Name'],
-    ['layer_height',                  'Layer Height (mm)'],
-    ['initial_layer_height',          'First Layer Height (mm)'],
-    ['wall_loops',                    'Wall Count'],
-    ['top_shell_layers',              'Top Layers'],
-    ['bottom_shell_layers',           'Bottom Layers'],
-    ['top_shell_thickness',           'Top Shell Thickness (mm)'],
-    ['bottom_shell_thickness',        'Bottom Shell Thickness (mm)'],
-    ['sparse_infill_density',         'Infill Density (%)'],
-    ['sparse_infill_pattern',         'Infill Pattern'],
-    ['enable_support',                'Supports Enabled'],
-    ['support_type',                  'Support Type'],
-    ['support_on_build_plate_only',   'Supports on Plate Only'],
-    ['raft_layers',                   'Raft Layers'],
-    ['timelapse_type',                'Timelapse'],
-  ];
-
-  /** Per-slot keys shown in the Filaments tab */
+  // ═══════════════════════════════════════════════════════════════════
+  //  Per-slot keys shown in the Filaments tab
+  // ═══════════════════════════════════════════════════════════════════
   const FILAMENT_SLOT_KEYS = [
-    ['filament_settings_id',              'Profile Name'],
+    ['filament_settings_id',              'Profile name'],
     ['filament_type',                     'Type'],
     ['filament_colour',                   'Color'],
     ['filament_vendor',                   'Vendor'],
-    ['nozzle_temperature',                'Nozzle Temp (°C)'],
-    ['nozzle_temperature_initial_layer',  'First Layer Nozzle (°C)'],
-    ['bed_temperature',                   'Bed Temp (°C)'],
-    ['bed_temperature_initial_layer',     'First Layer Bed (°C)'],
-    ['filament_flow_ratio',               'Flow Ratio'],
-    ['filament_max_volumetric_speed',     'Max Flow Rate (mm³/s)'],
+    ['nozzle_temperature',                'Nozzle temp (°C)'],
+    ['nozzle_temperature_initial_layer',  'First layer nozzle (°C)'],
+    ['bed_temperature',                   'Bed temp (°C)'],
+    ['bed_temperature_initial_layer',     'First layer bed (°C)'],
+    ['filament_flow_ratio',               'Flow ratio'],
+    ['filament_max_volumetric_speed',     'Max flow rate (mm³/s)'],
     ['filament_id',                       'Filament ID'],
   ];
+
+  // Compute the full set of keys claimed by the schema + filament keys
+  const SCHEMA_CLAIMED_KEYS = new Set([
+    ...SLICER_SCHEMA.flatMap(tab => tab.sections.flatMap(sec => sec.keys.map(([k]) => k))),
+    ...FILAMENT_SLOT_KEYS.map(([k]) => k),
+  ]);
+
+  // All tab IDs (for reset/badge loops)
+  const ALL_TAB_IDS = [...SLICER_SCHEMA.map(t => t.id), 'filaments'];
 
   // ═══════════════════════════════════════════════════════════════════
   //  State
   // ═══════════════════════════════════════════════════════════════════
-  const state = {
-    fileA: null, fileB: null,
-    zipA: null,  zipB: null,
-    objA: null,  objB: null,   // parsed project_settings.config objects
-  };
+  const state = { fileA: null, fileB: null, zipA: null, zipB: null, objA: null, objB: null };
+
+  // Toolbar state shared across all tabs
+  const toolbar = { viewMode: 'diffs', searchTerm: '' };
+
+  // Comparison results (set during runComparison, used by refreshAllTabs)
+  let currentAllRows     = [];
+  let currentAllRowsMap  = new Map();
+
+  // Flat search index across all tabs — built after each comparison
+  let searchIndex = [];
+  let dropdownFocusIdx = -1;
 
   // ═══════════════════════════════════════════════════════════════════
   //  DOM helpers  — all user data uses textContent, never innerHTML
@@ -499,13 +996,10 @@
 
   /**
    * Canonical string used ONLY for equality comparison (never displayed).
-   *
-   * Key rules that eliminate false positives:
-   *  • Numbers and strings with the same value compare equal ("6000" == 6000)
-   *  • A single-element array equals the same scalar value  (["6000"] == 6000)
-   *  • An array where every element is the same equals that scalar (["70","70"] == "70")
-   *    — avoids noise when one file was saved with 1 filament slot vs 2 identical slots
-   *  • Arrays with truly different values stay different (["70","80"] != "70")
+   * • Numbers and strings with the same value compare equal ("6000" == 6000)
+   * • A single-element array equals the same scalar value  (["6000"] == 6000)
+   * • An array where every element is the same equals that scalar (["70","70"] == "70")
+   * • Arrays with truly different values stay different (["70","80"] != "70")
    */
   function normalizeValue(val) {
     if (val === null || val === undefined) return '';
@@ -513,19 +1007,12 @@
       if (val.length === 0) return '';
       const strs = val.map(v => String(v ?? '').trim());
       const unique = new Set(strs);
-      // All slots identical → treat as a single scalar value
       if (unique.size === 1) return [...unique][0];
-      // Genuinely different values per slot
-      return strs.join('\x00'); // null-byte separator can't appear in real setting values
+      return strs.join('\x00');
     }
     return String(val).trim();
   }
 
-  /**
-   * Human-readable display string for a setting value.
-   * Mirrors the same collapsing logic as normalizeValue so that values
-   * that compare as equal also *look* the same on screen.
-   */
   function formatValue(val) {
     if (val === null || val === undefined) return { text: '—', isLong: false };
     if (Array.isArray(val)) {
@@ -539,7 +1026,6 @@
     return { text: s === '' ? '—' : s, isLong: s.length > 120 };
   }
 
-  /** Returns true if s looks like a CSS hex color (#RGB, #RRGGBB, #RRGGBBAA) */
   function isHexColor(s) {
     return /^#[0-9A-Fa-f]{3}(?:[0-9A-Fa-f]{3}(?:[0-9A-Fa-f]{2})?)?$/.test(s.trim());
   }
@@ -548,11 +1034,8 @@
   //  ZIP utilities
   // ═══════════════════════════════════════════════════════════════════
   async function loadZip(file) {
-    try {
-      return await JSZip.loadAsync(file);
-    } catch {
-      throw new Error(`"${file.name}" could not be read as a ZIP/3MF file. Is it a valid .3mf?`);
-    }
+    try { return await JSZip.loadAsync(file); }
+    catch { throw new Error(`"${file.name}" could not be read as a ZIP/3MF file. Is it a valid .3mf?`); }
   }
 
   async function readZipText(zip, path) {
@@ -612,33 +1095,6 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  //  Printer Profile builder
-  // ═══════════════════════════════════════════════════════════════════
-  function buildPrinterProfileRows(objA, objB) {
-    const rows = [];
-
-    const addSection = label => rows.push({ isSection: true, label });
-    const addRow = (key, label) => {
-      const rawA = objA?.[key];
-      const rawB = objB?.[key];
-      // Skip rows where both sides have no data
-      if (rawA === undefined && rawB === undefined) return;
-      const fmtA = rawA !== undefined ? formatValue(rawA) : { text: '—', isLong: false };
-      const fmtB = rawB !== undefined ? formatValue(rawB) : { text: '—', isLong: false };
-      const differs = normalizeValue(rawA) !== normalizeValue(rawB);
-      rows.push({ key, label, fmtA, fmtB, differs });
-    };
-
-    addSection('Printer');
-    for (const [key, label] of PRINTER_INFO_KEYS) addRow(key, label);
-
-    addSection('Print Quality / Profile');
-    for (const [key, label] of PRINT_QUALITY_KEYS) addRow(key, label);
-
-    return rows;
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
   //  Filaments builder
   // ═══════════════════════════════════════════════════════════════════
   function buildFilamentRows(objA, objB) {
@@ -646,7 +1102,6 @@
       objA?.filament_type?.length ?? objA?.filament_settings_id?.length ?? 1,
       objB?.filament_type?.length ?? objB?.filament_settings_id?.length ?? 1,
     );
-
     const rows = [];
     for (let i = 0; i < slotCount; i++) {
       rows.push({ isSection: true, label: `Filament ${i + 1}` });
@@ -669,21 +1124,17 @@
   //  Markdown / Reddit copy
   // ═══════════════════════════════════════════════════════════════════
   function buildMarkdownTable(diffs, fileAName, fileBName) {
-    const esc = s => s.replace(/\|/g, '\\|').replace(/[\r\n]+/g, ' ');
+    const esc  = s => s.replace(/\|/g, '\\|').replace(/[\r\n]+/g, ' ');
     const trunc = (s, n = 80) => s.length > n ? s.slice(0, n - 1) + '…' : s;
-
     const lines = [
-      `**3MF Slicer Settings Comparison**`,
-      ``,
+      `**3MF Slicer Settings Comparison**`, ``,
       `File A: \`${fileAName}\`  `,
-      `File B: \`${fileBName}\``,
-      ``,
+      `File B: \`${fileBName}\``, ``,
       `| Setting | File A | File B |`,
       `|:---|:---|:---|`,
     ];
-    for (const d of diffs) {
+    for (const d of diffs)
       lines.push(`| ${esc(d.key)} | ${esc(trunc(d.fmtA.text))} | ${esc(trunc(d.fmtB.text))} |`);
-    }
     lines.push(``, `*Compared using 3MF Compare Tool*`);
     return lines.join('\n');
   }
@@ -691,8 +1142,104 @@
   // ═══════════════════════════════════════════════════════════════════
   //  Rendering helpers
   // ═══════════════════════════════════════════════════════════════════
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Search index + autocomplete dropdown
+  // ═══════════════════════════════════════════════════════════════════
+
+  function buildSearchIndex() {
+    searchIndex = [];
+    // Slicer schema entries
+    for (const tabDef of SLICER_SCHEMA) {
+      for (const sectionDef of tabDef.sections) {
+        for (const [key, label] of sectionDef.keys) {
+          const row = currentAllRowsMap.get(key);
+          if (!row) continue; // skip keys not present in either file
+          searchIndex.push({ key, label, tabId: tabDef.id, tabLabel: tabDef.label, sectionLabel: sectionDef.label, differs: row.differs });
+        }
+      }
+    }
+    // Catch-all unclaimed keys → Others tab
+    for (const row of currentAllRows) {
+      if (!SCHEMA_CLAIMED_KEYS.has(row.key)) {
+        searchIndex.push({ key: row.key, label: row.key, tabId: 'others', tabLabel: 'Others', sectionLabel: 'Other settings', differs: row.differs });
+      }
+    }
+    // Filament keys present in either file
+    for (const [key, label] of FILAMENT_SLOT_KEYS) {
+      const hasData = (state.objA?.[key] != null) || (state.objB?.[key] != null);
+      if (hasData) {
+        searchIndex.push({ key, label, tabId: 'filaments', tabLabel: 'Filaments', sectionLabel: 'Filament slots', differs: false });
+      }
+    }
+  }
+
+  function showSearchDropdown(term) {
+    const dd = $('search-dropdown');
+    dropdownFocusIdx = -1;
+    if (!term || searchIndex.length === 0) { dd.classList.remove('visible'); return; }
+
+    const q = term.toLowerCase();
+    const matches = searchIndex.filter(item =>
+      item.label.toLowerCase().includes(q) || item.key.toLowerCase().includes(q)
+    ).slice(0, 10);
+
+    dd.textContent = '';
+    if (matches.length === 0) {
+      dd.appendChild(mkEl('div', { className: 'search-result-empty', textContent: 'No matching settings found' }));
+      dd.classList.add('visible');
+      return;
+    }
+
+    for (const item of matches) {
+      const div = mkEl('div', { className: 'search-result-item' });
+      if (item.differs) div.appendChild(mkEl('span', { className: 'search-result-diff-dot' }));
+      div.appendChild(mkEl('span', { className: 'search-result-label', textContent: item.label }));
+      div.appendChild(mkEl('span', { className: 'search-result-crumb', textContent: `${item.tabLabel} › ${item.sectionLabel}` }));
+      div.addEventListener('mousedown', e => {
+        e.preventDefault();
+        dd.classList.remove('visible');
+        $('search-input').value = '';
+        toolbar.searchTerm = '';
+        navigateToSetting(item);
+      });
+      dd.appendChild(div);
+    }
+    dd.classList.add('visible');
+  }
+
+  function navigateToSetting(item) {
+    const row = currentAllRowsMap.get(item.key);
+    // If item won't be visible in diffs-only mode, switch to All settings
+    if (toolbar.viewMode === 'diffs' && (!row || !row.differs)) {
+      toolbar.viewMode = 'all';
+      $('btn-all-settings').classList.add('active');
+      $('btn-diffs-only').classList.remove('active');
+    }
+    refreshAllTabs();
+    switchTab(item.tabId);
+
+    // Two rAF passes: first lets tab panel become active, second lets layout settle
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`#panel-${item.tabId} .setting-row[data-key="${item.key.toLowerCase()}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('highlight-row');
+          setTimeout(() => el.classList.remove('highlight-row'), 2000);
+        }
+      });
+    });
+  }
+
+  function truncateName(name, max = 30) {
+    if (!name) return '';
+    return name.length > max ? name.slice(0, max) + '…' : name;
+  }
   function renderInfoBanner(parent, msg) {
-    parent.appendChild(mkEl('div', { className: 'info-banner', textContent: msg }));
+    const d = mkEl('div', { className: 'info-banner', textContent: msg });
+    d.style.margin = '10px 14px';
+    parent.appendChild(d);
   }
 
   function renderEmptyState(parent, msg) {
@@ -702,241 +1249,276 @@
     parent.appendChild(wrap);
   }
 
-  /** Create a table cell containing a value, with optional color swatch and collapsible for long values */
-  function makeValueTd(fmt, diffClass, showColorSwatch) {
-    const td = document.createElement('td');
+  /** Build a value div for use inside a .setting-val cell */
+  function buildValueDiv(fmt, diffClass, showColorSwatch) {
+    const div = mkEl('div', { className: `setting-val${diffClass ? ' ' + diffClass : ''}` });
     const colorText = fmt.text.trim();
-
     if (showColorSwatch && isHexColor(colorText)) {
       const wrap = mkEl('div', { className: 'color-val-wrap' });
       const swatch = mkEl('span', { className: 'color-swatch' });
-      swatch.style.backgroundColor = colorText;  // safe: validated as hex color
-      const span = mkEl('span', { className: `value-cell ${diffClass}`, textContent: colorText });
+      swatch.style.backgroundColor = colorText;
       wrap.appendChild(swatch);
-      wrap.appendChild(span);
-      td.appendChild(wrap);
+      wrap.appendChild(document.createTextNode(colorText));
+      div.appendChild(wrap);
     } else if (!fmt.isLong) {
-      td.appendChild(mkEl('span', { className: `value-cell ${diffClass}`, textContent: fmt.text }));
+      div.appendChild(document.createTextNode(fmt.text));
     } else {
       const summary = mkEl('summary', { textContent: 'Show value' });
       const pre = mkEl('pre', { textContent: fmt.text });
-      td.appendChild(mkEl('details', {}, [summary, pre]));
+      div.appendChild(mkEl('details', {}, [summary, pre]));
     }
-    return td;
-  }
-
-  function makeLabelTd(text) {
-    return mkEl('td', {}, [mkEl('span', { className: 'label-cell', textContent: text })]);
-  }
-
-  function makeKeyTd(text) {
-    return mkEl('td', {}, [mkEl('span', { className: 'key-cell', textContent: text })]);
-  }
-
-  function buildTable(headerLabels, bodyRows) {
-    const wrap = mkEl('div', { className: 'diff-table-wrap' });
-    const table = document.createElement('table');
-    const thead = document.createElement('thead');
-    const headTr = document.createElement('tr');
-    for (const h of headerLabels) headTr.appendChild(mkEl('th', { textContent: h }));
-    thead.appendChild(headTr);
-    table.appendChild(thead);
-    const tbody = document.createElement('tbody');
-    for (const r of bodyRows) tbody.appendChild(r);
-    table.appendChild(tbody);
-    wrap.appendChild(table);
-    return wrap;
+    return div;
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  //  Settings Differences tab
+  //  Per-tab diff count (for badges)
   // ═══════════════════════════════════════════════════════════════════
-  function renderSettingsTab(allRows, objAMissing, objBMissing, fileAName, fileBName) {
-    const panel = $('panel-settings');
+  function computeTabDiffCount(tabDef, allRowsMap) {
+    let count = 0;
+    for (const section of tabDef.sections)
+      for (const [key] of section.keys) {
+        const row = allRowsMap.get(key);
+        if (row?.differs) count++;
+      }
+    return count;
+  }
+
+  function computeOthersDiffCount(allRows, allRowsMap) {
+    const inOthers = SLICER_SCHEMA.find(t => t.id === 'others');
+    let count = computeTabDiffCount(inOthers, allRowsMap);
+    // Add unclaimed rows that go to Others
+    for (const row of allRows)
+      if (!SCHEMA_CLAIMED_KEYS.has(row.key) && row.differs) count++;
+    return count;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Section block builder
+  // ═══════════════════════════════════════════════════════════════════
+  function buildSectionBlock(sectionDef, rows, viewMode, searchTerm, labelOverride) {
+    const label = labelOverride ?? sectionDef.label;
+    const icon  = sectionDef.icon ?? '•';
+
+    const block = mkEl('div', { className: 'section-block' });
+
+    // Count diffs in this section
+    const sectionDiffs = rows.filter(r => r.differs).length;
+
+    // In diffs-only mode, skip sections with no diffs (unless search is active)
+    const hasVisibleRows = rows.some(r => {
+      if (viewMode === 'diffs' && !r.differs) return false;
+      if (searchTerm) {
+        const q = searchTerm.toLowerCase();
+        return r.key.toLowerCase().includes(q) || (r.label || '').toLowerCase().includes(q);
+      }
+      return true;
+    });
+    if (!hasVisibleRows) return null;
+
+    // Section header
+    const hdr = mkEl('div', { className: 'section-header' });
+    hdr.appendChild(mkEl('span', { className: 'section-icon', textContent: icon }));
+    hdr.appendChild(mkEl('span', { className: 'section-title', textContent: label }));
+    if (sectionDiffs > 0) {
+      hdr.appendChild(mkEl('span', {
+        className: 'section-diff-badge',
+        textContent: String(sectionDiffs),
+      }));
+    }
+    hdr.appendChild(mkEl('span', { className: 'collapse-arrow', textContent: '▾' }));
+    hdr.addEventListener('click', () => block.classList.toggle('collapsed'));
+    block.appendChild(hdr);
+
+    // Section body
+    const body = mkEl('div', { className: 'section-body' });
+    let rowCount = 0;
+
+    for (const row of rows) {
+      if (viewMode === 'diffs' && !row.differs) continue;
+      if (searchTerm) {
+        const q = searchTerm.toLowerCase();
+        if (!row.key.toLowerCase().includes(q) && !(row.label || '').toLowerCase().includes(q)) continue;
+      }
+
+      const displayLabel = row.label || row.key;
+      const tr = mkEl('div', { className: `setting-row${row.differs ? ' diff-row' : ''}` });
+      tr.dataset.key   = row.key.toLowerCase();
+      tr.dataset.label = displayLabel.toLowerCase();
+
+      const labelDiv = mkEl('div', { className: 'setting-label' });
+      labelDiv.appendChild(document.createTextNode(displayLabel));
+      tr.appendChild(labelDiv);
+      tr.appendChild(buildValueDiv(row.fmtA, row.differs ? 'diff-a' : '', false));
+      tr.appendChild(buildValueDiv(row.fmtB, row.differs ? 'diff-b' : '', false));
+      body.appendChild(tr);
+      rowCount++;
+    }
+
+    if (rowCount === 0) return null;
+    block.appendChild(body);
+    return block;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Slicer tab renderer
+  // ═══════════════════════════════════════════════════════════════════
+  function renderSlicerTab(tabId, tabDef, allRowsMap, allRows, viewMode, searchTerm, fileAName, fileBName) {
+    const panel = $(`panel-${tabId}`);
     panel.textContent = '';
 
-    if (objAMissing) renderInfoBanner(panel, 'project_settings.config not found in File A. BambuStudio and OrcaSlicer 3MF files are supported.');
-    if (objBMissing) renderInfoBanner(panel, 'project_settings.config not found in File B. BambuStudio and OrcaSlicer 3MF files are supported.');
-    if (objAMissing && objBMissing) { renderEmptyState(panel, 'No slicer settings to compare.'); return; }
+    const wrap = mkEl('div', { className: 'settings-panel' });
 
-    const diffRows  = allRows.filter(r => r.differs);
-    const diffCount = diffRows.length;
-    const totalCount = allRows.length;
+    // Sticky column headers
+    const colHdr = mkEl('div', { className: 'col-headers' });
+    colHdr.appendChild(mkEl('div', { textContent: 'Setting' }));
+    colHdr.appendChild(mkEl('div', { textContent: `(A) ${truncateName(fileAName) || 'File A'}` }));
+    colHdr.appendChild(mkEl('div', { textContent: `(B) ${truncateName(fileBName) || 'File B'}` }));
+    wrap.appendChild(colHdr);
 
-    // ── Panel header ──────────────────────────────────────────────
-    const header = mkEl('div', { className: 'panel-header' });
+    let anySection = false;
 
-    const countSpan = mkEl('span', { className: 'panel-title' });
-    const updateCountLabel = mode =>
-      (countSpan.textContent = mode === 'diffs'
-        ? `${diffCount} difference${diffCount !== 1 ? 's' : ''} found`
-        : `${diffCount} difference${diffCount !== 1 ? 's' : ''} highlighted · ${totalCount} total settings`);
-    updateCountLabel('diffs');
+    for (const sectionDef of tabDef.sections) {
+      const rows = sectionDef.keys
+        .map(([key, label]) => {
+          const row = allRowsMap.get(key);
+          return row ? { ...row, label } : null;
+        })
+        .filter(Boolean);
 
-    // Segmented toggle: Differences only | All settings
-    panel.dataset.view = 'diffs';
-    const segToggle = mkEl('div', { className: 'seg-toggle' });
-    const btnDiffs  = mkEl('button', { className: 'seg-btn active', textContent: 'Differences only' });
-    const btnAll    = mkEl('button', { className: 'seg-btn',        textContent: 'All settings' });
-    segToggle.appendChild(btnDiffs);
-    segToggle.appendChild(btnAll);
+      if (rows.length === 0) continue;
 
-    const searchWrap  = mkEl('div', { className: 'search-wrap' });
-    const searchInput = mkEl('input', { id: 'search-input', type: 'text', placeholder: 'Filter settings…' });
-    searchWrap.appendChild(searchInput);
-
-    const copyBtn = mkEl('button', { className: 'action-btn', textContent: 'Copy as Markdown Table' });
-    copyBtn.addEventListener('click', () => {
-      const md = buildMarkdownTable(diffRows, fileAName, fileBName);
-      navigator.clipboard.writeText(md).then(() => {
-        copyBtn.textContent = '✓ Copied!';
-        copyBtn.classList.add('done');
-        setTimeout(() => { copyBtn.textContent = 'Copy as Markdown Table'; copyBtn.classList.remove('done'); }, 2500);
-      }).catch(() => {});
-    });
-
-    header.appendChild(countSpan);
-    header.appendChild(mkEl('div', { className: 'panel-actions' }, [segToggle, searchWrap, copyBtn]));
-    panel.appendChild(header);
-
-    if (allRows.length === 0) { renderEmptyState(panel, 'No slicer settings to compare.'); return; }
-    if (diffCount === 0) {
-      // Still render the table so "All settings" toggle works
+      const block = buildSectionBlock(sectionDef, rows, viewMode, searchTerm);
+      if (block) { wrap.appendChild(block); anySection = true; }
     }
 
-    // ── Build all table rows up-front ────────────────────────────
-    // Each row knows its `differs` state; visibility is driven by the
-    // `refreshVisibility()` function rather than re-rendering.
-    const tableRowMeta = allRows.map(row => {
-      const tr = document.createElement('tr');
-      tr.className   = row.differs ? 'diff-row' : 'identical-row';
-      tr.dataset.key = row.key.toLowerCase();
-      tr.dataset.differs = row.differs ? '1' : '0';
-      tr.appendChild(makeKeyTd(row.key));
-      tr.appendChild(makeValueTd(row.fmtA, row.differs ? 'diff-a' : '', false));
-      tr.appendChild(makeValueTd(row.fmtB, row.differs ? 'diff-b' : '', false));
-      return { tr, differs: row.differs };
-    });
+    // Catch-all "Other settings" section — only on the Others tab
+    if (tabId === 'others') {
+      const unclaimedRows = allRows
+        .filter(r => !SCHEMA_CLAIMED_KEYS.has(r.key))
+        .map(r => ({ ...r, label: r.key }));
 
-    panel.appendChild(buildTable(['Setting', 'File A', 'File B'], tableRowMeta.map(m => m.tr)));
-
-    if (diffCount === 0 && panel.dataset.view === 'diffs') {
-      renderEmptyState(panel, 'No differences found in slicer settings.');
-    }
-
-    // ── Shared visibility updater ────────────────────────────────
-    function refreshVisibility() {
-      const mode = panel.dataset.view;
-      const term = searchInput.value.toLowerCase().trim();
-      for (const { tr, differs } of tableRowMeta) {
-        const hideByMode   = mode === 'diffs' && !differs;
-        const hideBySearch = term !== '' && !tr.dataset.key.includes(term);
-        tr.classList.toggle('hidden-row', hideByMode || hideBySearch);
+      if (unclaimedRows.length > 0) {
+        const catchBlock = buildSectionBlock(
+          { label: 'Other settings', icon: '⋯' },
+          unclaimedRows,
+          viewMode,
+          searchTerm,
+        );
+        if (catchBlock) {
+          wrap.appendChild(catchBlock);
+          anySection = true;
+        }
       }
     }
-    refreshVisibility();
 
-    // ── Toggle handlers ──────────────────────────────────────────
-    btnDiffs.addEventListener('click', () => {
-      panel.dataset.view = 'diffs';
-      btnDiffs.classList.add('active'); btnAll.classList.remove('active');
-      updateCountLabel('diffs');
-      refreshVisibility();
-    });
-    btnAll.addEventListener('click', () => {
-      panel.dataset.view = 'all';
-      btnAll.classList.add('active'); btnDiffs.classList.remove('active');
-      updateCountLabel('all');
-      refreshVisibility();
-    });
+    if (!anySection) {
+      renderEmptyState(wrap, viewMode === 'diffs'
+        ? 'No differences found in this tab.'
+        : 'No settings found for this tab in either file.');
+    }
 
-    searchInput.addEventListener('input', refreshVisibility);
+    panel.appendChild(wrap);
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  //  Printer & Profile tab
+  //  Filaments tab renderer (uses CSS-grid rows like slicer tabs)
   // ═══════════════════════════════════════════════════════════════════
-  function renderPrinterTab(objA, objB) {
-    const panel = $('panel-printer');
-    panel.textContent = '';
-
-    if (!objA && !objB) { renderInfoBanner(panel, 'project_settings.config not found in either file.'); return; }
-
-    // Explain the purpose so users don't wonder why settings appear here AND in the Settings tab
-    renderInfoBanner(panel,
-      'Shows a curated snapshot of printer and print-quality settings for both files — ' +
-      'whether or not they differ — so you can quickly see what printer and profile each file uses. ' +
-      'Differences are highlighted. For the full list of every changed setting, use the Settings Differences tab.');
-
-    const rows = buildPrinterProfileRows(objA, objB);
-    const diffCount = rows.filter(r => !r.isSection && r.differs).length;
-
-    const header = mkEl('div', { className: 'panel-header' });
-    header.appendChild(mkEl('span', { className: 'panel-title',
-      textContent: diffCount > 0
-        ? `${diffCount} difference${diffCount !== 1 ? 's' : ''} found`
-        : 'No differences — both files use the same printer profile' }));
-    panel.appendChild(header);
-
-    if (rows.length === 0) { renderEmptyState(panel, 'No printer profile data found.'); return; }
-
-    const tableRows = rows.map(r => {
-      const tr = document.createElement('tr');
-      if (r.isSection) {
-        tr.className = 'section-row';
-        const td = document.createElement('td');
-        td.setAttribute('colspan', '3');
-        td.textContent = r.label;
-        tr.appendChild(td);
-      } else {
-        tr.className = r.differs ? 'diff-row' : 'identical-row';
-        tr.appendChild(makeLabelTd(r.label));
-        tr.appendChild(makeValueTd(r.fmtA, r.differs ? 'diff-a' : '', false));
-        tr.appendChild(makeValueTd(r.fmtB, r.differs ? 'diff-b' : '', false));
-      }
-      return tr;
-    });
-    panel.appendChild(buildTable(['Property', 'File A', 'File B'], tableRows));
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  //  Filaments tab
-  // ═══════════════════════════════════════════════════════════════════
-  function renderFilamentsTab(objA, objB) {
+  function renderFilamentsTab(objA, objB, fileAName, fileBName, searchTerm = '') {
     const panel = $('panel-filaments');
     panel.textContent = '';
 
-    if (!objA && !objB) { renderInfoBanner(panel, 'project_settings.config not found in either file.'); return; }
+    if (!objA && !objB) {
+      renderInfoBanner(panel, 'project_settings.config not found in either file.');
+      return;
+    }
 
     const rows = buildFilamentRows(objA, objB);
-    const diffCount = rows.filter(r => !r.isSection && r.differs).length;
-
-    const header = mkEl('div', { className: 'panel-header' });
-    header.appendChild(mkEl('span', { className: 'panel-title',
-      textContent: diffCount > 0
-        ? `${diffCount} difference${diffCount !== 1 ? 's' : ''} found`
-        : 'No differences — both files use the same filament settings' }));
-    panel.appendChild(header);
-
     if (rows.length === 0) { renderEmptyState(panel, 'No filament data found.'); return; }
 
-    const tableRows = rows.map(r => {
-      const tr = document.createElement('tr');
-      if (r.isSection) {
-        tr.className = 'section-row';
-        const td = document.createElement('td');
-        td.setAttribute('colspan', '3');
-        td.textContent = r.label;
-        tr.appendChild(td);
-      } else {
-        tr.className = r.differs ? 'diff-row' : 'identical-row';
-        tr.appendChild(makeLabelTd(r.label));
-        tr.appendChild(makeValueTd(r.fmtA, r.differs ? 'diff-a' : '', !!r.isColor));
-        tr.appendChild(makeValueTd(r.fmtB, r.differs ? 'diff-b' : '', !!r.isColor));
+    const wrap = mkEl('div', { className: 'settings-panel' });
+
+    // Sticky column headers
+    const colHdr = mkEl('div', { className: 'col-headers' });
+    colHdr.appendChild(mkEl('div', { textContent: 'Property' }));
+    colHdr.appendChild(mkEl('div', { textContent: `(A) ${truncateName(fileAName) || 'File A'}` }));
+    colHdr.appendChild(mkEl('div', { textContent: `(B) ${truncateName(fileBName) || 'File B'}` }));
+    wrap.appendChild(colHdr);
+
+    // Group rows by section
+    let currentBlock = null;
+    let currentBody  = null;
+    let sectionDiffs = 0;
+    let sectionHdr   = null;
+
+    const finalizeSection = () => {
+      if (currentBlock && sectionHdr) {
+        if (sectionDiffs > 0) {
+          sectionHdr.insertBefore(
+            mkEl('span', { className: 'section-diff-badge', textContent: String(sectionDiffs) }),
+            sectionHdr.querySelector('.collapse-arrow'),
+          );
+        }
       }
-      return tr;
-    });
-    panel.appendChild(buildTable(['Property', 'File A', 'File B'], tableRows));
+    };
+
+    for (const row of rows) {
+      if (row.isSection) {
+        finalizeSection();
+        sectionDiffs = 0;
+
+        currentBlock = mkEl('div', { className: 'section-block' });
+        sectionHdr   = mkEl('div', { className: 'section-header' });
+        sectionHdr.appendChild(mkEl('span', { className: 'section-icon', textContent: '🧵' }));
+        sectionHdr.appendChild(mkEl('span', { className: 'section-title', textContent: row.label }));
+        sectionHdr.appendChild(mkEl('span', { className: 'collapse-arrow', textContent: '▾' }));
+        sectionHdr.addEventListener('click', () => currentBlock.classList.toggle('collapsed'));
+        currentBlock.appendChild(sectionHdr);
+
+        currentBody = mkEl('div', { className: 'section-body' });
+        currentBlock.appendChild(currentBody);
+        wrap.appendChild(currentBlock);
+      } else if (currentBody) {
+        if (searchTerm) {
+          const q = searchTerm.toLowerCase();
+          if (!row.key.toLowerCase().includes(q) && !row.label.toLowerCase().includes(q)) continue;
+        }
+        if (row.differs) sectionDiffs++;
+        const tr = mkEl('div', { className: `setting-row${row.differs ? ' diff-row' : ''}` });
+        const labelDiv = mkEl('div', { className: 'setting-label' });
+        labelDiv.appendChild(document.createTextNode(row.label));
+        tr.appendChild(labelDiv);
+        tr.appendChild(buildValueDiv(row.fmtA, row.differs ? 'diff-a' : '', !!row.isColor));
+        tr.appendChild(buildValueDiv(row.fmtB, row.differs ? 'diff-b' : '', !!row.isColor));
+        currentBody.appendChild(tr);
+      }
+    }
+    finalizeSection();
+    panel.appendChild(wrap);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  Re-render all slicer tabs (called when toolbar state changes)
+  // ═══════════════════════════════════════════════════════════════════
+  function refreshAllTabs() {
+    const { viewMode, searchTerm } = toolbar;
+    const fA = state.fileA?.name ?? 'File A';
+    const fB = state.fileB?.name ?? 'File B';
+
+    for (const tabDef of SLICER_SCHEMA) {
+      renderSlicerTab(tabDef.id, tabDef, currentAllRowsMap, currentAllRows, viewMode, searchTerm, fA, fB);
+    }
+    renderFilamentsTab(state.objA, state.objB, fA, fB, searchTerm);
+
+    // Update diff count label
+    const totalDiffs = currentAllRows.filter(r => r.differs).length;
+    const countEl = $('toolbar-diff-count');
+    if (countEl) {
+      if (viewMode === 'diffs') {
+        countEl.textContent = `${totalDiffs} difference${totalDiffs !== 1 ? 's' : ''} found`;
+      } else {
+        countEl.textContent = `${totalDiffs} diff${totalDiffs !== 1 ? 's' : ''} · ${currentAllRows.length} total`;
+      }
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -999,20 +1581,37 @@
 
   function resetAll() {
     state.fileA = state.fileB = state.zipA = state.zipB = state.objA = state.objB = null;
+    currentAllRows    = [];
+    currentAllRowsMap = new Map();
+    toolbar.viewMode  = 'diffs';
+    toolbar.searchTerm = '';
+
     for (const s of ['a', 'b']) {
       $(`input-${s}`).value = '';
       $(`file-name-${s}`).textContent = '';
       $(`slicer-info-${s}`).textContent = '';
       $(`zone-${s}`).classList.remove('filled');
     }
+
     $('results').style.display = 'none';
     $('error-banner').style.display = 'none';
     $('status-msg').textContent = '';
     $('btn-compare').disabled = true;
-    for (const t of ['settings', 'printer', 'filaments']) {
+    $('toolbar').classList.remove('visible');
+    $('search-input').value = '';
+    $('search-dropdown').classList.remove('visible');
+    $('btn-diffs-only').classList.add('active');
+    $('btn-all-settings').classList.remove('active');
+    searchIndex = [];
+    dropdownFocusIdx = -1;
+
+    for (const t of ALL_TAB_IDS) {
       const b = $(`badge-${t}`); if (b) b.textContent = '—';
       const p = $(`panel-${t}`); if (p) p.textContent = '';
     }
+
+    // Reset to first tab (Quality)
+    switchTab('quality');
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -1032,7 +1631,6 @@
       state.zipA = zipA;
       state.zipB = zipB;
 
-      // Detect slicers in background
       detectSlicer(zipA).then(info => {
         $('slicer-info-a').textContent = info.version ? `${info.name} ${info.version}` : info.name;
       });
@@ -1040,7 +1638,6 @@
         $('slicer-info-b').textContent = info.version ? `${info.name} ${info.version}` : info.name;
       });
 
-      // Load settings JSON for both files
       const [textA, textB] = await Promise.all([
         readZipText(zipA, 'Metadata/project_settings.config'),
         readZipText(zipB, 'Metadata/project_settings.config'),
@@ -1048,10 +1645,17 @@
       state.objA = parseJSON(textA);
       state.objB = parseJSON(textB);
 
-      const allRows = computeAllSettings(state.objA, state.objB);
-      const diffCount         = allRows.filter(r => r.differs).length;
-      const printerDiffCount  = buildPrinterProfileRows(state.objA, state.objB).filter(r => !r.isSection && r.differs).length;
-      const filamentDiffCount = buildFilamentRows(state.objA, state.objB).filter(r => !r.isSection && r.differs).length;
+      // Build comparison data
+      currentAllRows    = computeAllSettings(state.objA, state.objB);
+      currentAllRowsMap = new Map(currentAllRows.map(r => [r.key, r]));
+      buildSearchIndex();
+
+      // Reset toolbar state for fresh comparison
+      toolbar.viewMode   = 'diffs';
+      toolbar.searchTerm = '';
+      $('search-input').value = '';
+      $('btn-diffs-only').classList.add('active');
+      $('btn-all-settings').classList.remove('active');
 
       // Render compare header
       const hdr = $('compare-header');
@@ -1061,25 +1665,45 @@
       hdr.appendChild(document.createTextNode(' vs '));
       hdr.appendChild(mkEl('strong', { textContent: state.fileB.name }));
 
-      // Render all tabs
-      renderSettingsTab(allRows, !textA, !textB, state.fileA.name, state.fileB.name);
-      renderPrinterTab(state.objA, state.objB);
-      renderFilamentsTab(state.objA, state.objB);
+      // Render all slicer tabs
+      const fA = state.fileA.name;
+      const fB = state.fileB.name;
+      for (const tabDef of SLICER_SCHEMA) {
+        renderSlicerTab(tabDef.id, tabDef, currentAllRowsMap, currentAllRows, 'diffs', '', fA, fB);
+      }
+      renderFilamentsTab(state.objA, state.objB, fA, fB);
 
-      updateBadge('settings',  diffCount);
-      updateBadge('printer',   printerDiffCount);
+      // Update badges
+      for (const tabDef of SLICER_SCHEMA) {
+        if (tabDef.id === 'others') {
+          updateBadge('others', computeOthersDiffCount(currentAllRows, currentAllRowsMap));
+        } else {
+          updateBadge(tabDef.id, computeTabDiffCount(tabDef, currentAllRowsMap));
+        }
+      }
+      const filamentDiffCount = buildFilamentRows(state.objA, state.objB).filter(r => !r.isSection && r.differs).length;
       updateBadge('filaments', filamentDiffCount);
 
-      // Auto-activate tab with the most diffs
-      const best = [
-        ['settings',  diffCount],
-        ['printer',   printerDiffCount],
-        ['filaments', filamentDiffCount],
-      ].sort((a, b) => b[1] - a[1])[0][0];
+      // Update toolbar diff count
+      const totalDiffs = currentAllRows.filter(r => r.differs).length;
+      $('toolbar-diff-count').textContent = `${totalDiffs} difference${totalDiffs !== 1 ? 's' : ''} found`;
+
+      // Auto-activate tab with most diffs
+      const tabDiffCounts = SLICER_SCHEMA.map(t => [t.id, t.id === 'others'
+        ? computeOthersDiffCount(currentAllRows, currentAllRowsMap)
+        : computeTabDiffCount(t, currentAllRowsMap)
+      ]);
+      tabDiffCounts.push(['filaments', filamentDiffCount]);
+      const best = tabDiffCounts.sort((a, b) => b[1] - a[1])[0][0];
       switchTab(best);
 
+      // Show toolbar and results
+      $('toolbar').classList.add('visible');
       $('results').style.display = 'block';
       $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      if (!textA) renderInfoBanner($(`panel-quality`), 'project_settings.config not found in File A.');
+      if (!textB) renderInfoBanner($(`panel-quality`), 'project_settings.config not found in File B.');
 
     } catch (err) {
       showError(err.message || 'An unexpected error occurred. Please try again.');
@@ -1111,8 +1735,83 @@
     $('btn-compare').addEventListener('click', runComparison);
     $('btn-reset').addEventListener('click', resetAll);
     $('error-close').addEventListener('click', () => { $('error-banner').style.display = 'none'; });
+
+    // Tab switching
     for (const btn of document.querySelectorAll('.tab-btn'))
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+
+    // Search — show autocomplete dropdown as user types
+    $('search-input').addEventListener('input', e => {
+      const val = e.target.value;
+      toolbar.searchTerm = val.toLowerCase().trim();
+      if (val.trim()) {
+        showSearchDropdown(val.trim());
+      } else {
+        $('search-dropdown').classList.remove('visible');
+        refreshAllTabs();
+      }
+    });
+
+    // Keyboard navigation inside dropdown
+    $('search-input').addEventListener('keydown', e => {
+      const dd = $('search-dropdown');
+      const items = dd.querySelectorAll('.search-result-item');
+      if (!dd.classList.contains('visible') || items.length === 0) {
+        if (e.key === 'Escape') { $('search-input').blur(); }
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        dropdownFocusIdx = Math.min(dropdownFocusIdx + 1, items.length - 1);
+        items.forEach((el, i) => el.classList.toggle('focused', i === dropdownFocusIdx));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        dropdownFocusIdx = Math.max(dropdownFocusIdx - 1, 0);
+        items.forEach((el, i) => el.classList.toggle('focused', i === dropdownFocusIdx));
+      } else if (e.key === 'Enter' && dropdownFocusIdx >= 0 && items[dropdownFocusIdx]) {
+        items[dropdownFocusIdx].dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      } else if (e.key === 'Escape') {
+        dd.classList.remove('visible');
+        dropdownFocusIdx = -1;
+        $('search-input').blur();
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', e => {
+      if (!$('search-input').contains(e.target) && !$('search-dropdown').contains(e.target)) {
+        $('search-dropdown').classList.remove('visible');
+        dropdownFocusIdx = -1;
+      }
+    });
+    $('btn-diffs-only').addEventListener('click', () => {
+      if (toolbar.viewMode === 'diffs') return;
+      toolbar.viewMode = 'diffs';
+      $('btn-diffs-only').classList.add('active');
+      $('btn-all-settings').classList.remove('active');
+      refreshAllTabs();
+    });
+    $('btn-all-settings').addEventListener('click', () => {
+      if (toolbar.viewMode === 'all') return;
+      toolbar.viewMode = 'all';
+      $('btn-all-settings').classList.add('active');
+      $('btn-diffs-only').classList.remove('active');
+      refreshAllTabs();
+    });
+
+    // Copy as Markdown
+    $('btn-copy-md').addEventListener('click', () => {
+      const diffs = currentAllRows.filter(r => r.differs);
+      const md = buildMarkdownTable(diffs, state.fileA?.name ?? 'File A', state.fileB?.name ?? 'File B');
+      const btn = $('btn-copy-md');
+      navigator.clipboard.writeText(md).then(() => {
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('done');
+        setTimeout(() => { btn.textContent = 'Copy as Markdown Table'; btn.classList.remove('done'); }, 2500);
+      }).catch(() => {});
+    });
+
+    // Jump to top
     const jumpBtn = $('jump-top');
     window.addEventListener('scroll', () => { jumpBtn.classList.toggle('visible', window.scrollY > 400); }, { passive: true });
     jumpBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));

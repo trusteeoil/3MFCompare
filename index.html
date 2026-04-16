@@ -597,18 +597,22 @@
         <button class="tab-btn" data-tab="others">
           Others <span class="badge" id="badge-others">—</span>
         </button>
+        <button class="tab-btn" data-tab="printer">
+          Printer <span class="badge" id="badge-printer">—</span>
+        </button>
         <button class="tab-btn" data-tab="filaments">
           Filaments <span class="badge" id="badge-filaments">—</span>
         </button>
       </div>
     </div>
 
-    <!-- 6 tab panels (content injected by JS) -->
+    <!-- 7 tab panels (content injected by JS) -->
     <div id="panel-quality"   class="tab-panel active"></div>
     <div id="panel-strength"  class="tab-panel"></div>
     <div id="panel-speed"     class="tab-panel"></div>
     <div id="panel-support"   class="tab-panel"></div>
     <div id="panel-others"    class="tab-panel"></div>
+    <div id="panel-printer"   class="tab-panel"></div>
     <div id="panel-filaments" class="tab-panel"></div>
   </div>
 
@@ -908,14 +912,87 @@
           ['gcode_label_objects',       'Label objects'],
           ['exclude_object',            'Exclude objects'],
         ]},
-        { label: 'Printer info', icon: '🖨', keys: [
-          ['machine_type',      'Printer model'],
-          ['printer_model',     'Printer model (alt)'],
+      ],
+    },
+    {
+      id: 'printer', label: 'Printer',
+      sections: [
+        { label: 'Printable space', icon: '▭', keys: [
+          ['machine_type',         'Printer model'],
+          ['printer_model',        'Printer model (alt)'],
+          ['printer_settings_id',  'Printer settings ID'],
+          ['print_settings_id',    'Print profile name'],
+          ['printable_area',       'Printable area'],
+          ['bed_exclude_area',     'Bed exclude area'],
+          ['printable_height',     'Printable height'],
+          ['max_print_height',     'Max print height'],
+          ['best_object_pos',      'Best object position'],
+        ]},
+        { label: 'Machine', icon: '⚙', keys: [
+          ['printer_structure',         'Printer structure'],
+          ['gcode_flavor',              'G-code flavor'],
+          ['thumbnail_size',            'Thumbnail size'],
+          ['thumbnail_size_small',      'Thumbnail size (small)'],
+          ['scan_first_layer',          'Scan first layer'],
+          ['print_cw',                  'Print loops clockwise'],
+          ['use_relative_e_distances',  'Use relative E distances'],
+          ['use_firmware_retraction',   'Use firmware retraction'],
+          ['bed_temperature_type',      'Bed temperature type'],
+          ['filament_load_time',        'Filament load time'],
+          ['filament_unload_time',      'Filament unload time'],
+          ['extruder_switch_time',      'Extruder switch time'],
+          ['hotend_change_time',        'Hotend change time'],
+          ['before_layer_change_gcode', 'Before layer change G-code'],
+          ['layer_change_gcode',        'After layer change G-code'],
+          ['change_filament_gcode',     'Change filament G-code'],
+          ['time_lapse_gcode',          'Time lapse G-code'],
+        ]},
+        { label: 'Extruder', icon: '◈', keys: [
+          ['nozzle_type',       'Nozzle type'],
           ['nozzle_diameter',   'Nozzle diameter'],
-          ['printable_area',    'Build plate area'],
-          ['max_print_height',  'Max print height'],
-          ['print_settings_id', 'Print profile name'],
-          ['printer_settings_id','Printer settings ID'],
+          ['nozzle_volume',     'Nozzle volume'],
+          ['min_layer_height',  'Min layer height'],
+          ['max_layer_height',  'Max layer height'],
+          ['extruder_offset',   'Extruder offset'],
+        ]},
+        { label: 'Retraction', icon: '↩', keys: [
+          ['retraction_length',               'Retraction length'],
+          ['z_hop',                           'Z hop when retract'],
+          ['z_hop_height',                    'Z hop height'],
+          ['z_hop_lower_boundary',            'Z hop lower boundary'],
+          ['z_hop_upper_boundary',            'Z hop upper boundary'],
+          ['z_hop_type',                      'Z hop type'],
+          ['retraction_speed',                'Retraction speed'],
+          ['deretraction_speed',              'Deretraction speed'],
+          ['retraction_restart_extra',        'Extra length on restart'],
+          ['travel_distance_threshold',       'Travel distance threshold'],
+          ['retract_when_changing_layer',     'Retract when changing layer'],
+          ['wipe',                            'Wipe while retracting'],
+          ['wipe_distance',                   'Wipe distance'],
+          ['retract_before_wipe',             'Retract before wipe'],
+          ['retract_length_toolchange',       'Retraction when switching material'],
+          ['retract_restart_extra_toolchange','Extra length on restart (switching)'],
+          ['long_retractions_when_cut',       'Long retraction when cut (experimental)'],
+        ]},
+        { label: 'Extruder clearance', icon: '◯', keys: [
+          ['extruder_clearance_radius',         'Max radius'],
+          ['extruder_clearance_dist_to_rod',    'Distance to rod'],
+          ['extruder_clearance_height_to_rod',  'Height to rod'],
+          ['extruder_clearance_height_to_lid',  'Height to lid'],
+        ]},
+        { label: 'Accessory', icon: '⊕', keys: [
+          ['auxiliary_part_cooling_fan',       'Auxiliary part cooling fan'],
+          ['fan_speedup_time',                 'Fan speedup time'],
+          ['support_air_filtration',           'Air filtration enhancement'],
+          ['support_chamber_temp_control',     'Chamber temperature control'],
+          ['chamber_temperatures',             'Chamber temperature'],
+          ['idle_temperature',                 'Idle temperature'],
+        ]},
+        { label: 'Machine G-code', icon: '⌨', keys: [
+          ['machine_start_gcode', 'Machine start G-code'],
+          ['machine_end_gcode',   'Machine end G-code'],
+          ['toolchange_gcode',    'Tool change G-code'],
+          ['printing_by_object_gcode','Printing by object G-code'],
         ]},
       ],
     },
@@ -924,18 +1001,94 @@
   // ═══════════════════════════════════════════════════════════════════
   //  Per-slot keys shown in the Filaments tab
   // ═══════════════════════════════════════════════════════════════════
+  // Filament slot keys — grouped by section for readability; rendered per slot
   const FILAMENT_SLOT_KEYS = [
+    // ── Basic information ──────────────────────────────────────────
     ['filament_settings_id',              'Profile name'],
     ['filament_type',                     'Type'],
     ['filament_colour',                   'Color'],
     ['filament_vendor',                   'Vendor'],
-    ['nozzle_temperature',                'Nozzle temp (°C)'],
-    ['nozzle_temperature_initial_layer',  'First layer nozzle (°C)'],
-    ['bed_temperature',                   'Bed temp (°C)'],
-    ['bed_temperature_initial_layer',     'First layer bed (°C)'],
+    ['filament_soluble',                  'Soluble material'],
+    ['filament_is_support',               'Support material'],
+    ['required_nozzle_HRC',               'Required nozzle HRC'],
+    ['filament_diameter',                 'Diameter (mm)'],
     ['filament_flow_ratio',               'Flow ratio'],
-    ['filament_max_volumetric_speed',     'Max flow rate (mm³/s)'],
+    ['filament_density',                  'Density (g/cm³)'],
+    ['filament_shrinkage',                'Shrinkage (%)'],
+    ['filament_cost',                     'Price (money/kg)'],
+    ['filament_minimal_purge_on_wipe_tower','Min purge on wipe tower (mm³)'],
+    ['filament_wipe_distance',            'Wipe tower cooling (°C)'],
     ['filament_id',                       'Filament ID'],
+    // ── Print temperature ──────────────────────────────────────────
+    ['nozzle_temperature',                'Nozzle temp — other layers (°C)'],
+    ['nozzle_temperature_initial_layer',  'Nozzle temp — first layer (°C)'],
+    ['hot_plate_temp',                    'Cool Plate SuperTack — other layers (°C)'],
+    ['hot_plate_temp_initial_layer',      'Cool Plate SuperTack — first layer (°C)'],
+    ['cool_plate_temp',                   'Cool Plate — other layers (°C)'],
+    ['cool_plate_temp_initial_layer',     'Cool Plate — first layer (°C)'],
+    ['eng_plate_temp',                    'Engineering Plate — other layers (°C)'],
+    ['eng_plate_temp_initial_layer',      'Engineering Plate — first layer (°C)'],
+    ['textured_plate_temp',               'Textured PEI Plate — other layers (°C)'],
+    ['textured_plate_temp_initial_layer', 'Textured PEI Plate — first layer (°C)'],
+    ['bed_temperature',                   'Bed temp — other layers (°C)'],
+    ['bed_temperature_initial_layer',     'Bed temp — first layer (°C)'],
+    // ── Volumetric speed ───────────────────────────────────────────
+    ['filament_max_volumetric_speed',     'Max volumetric speed (mm³/s)'],
+    ['filament_loading_speed',            'Loading speed (mm/s)'],
+    ['filament_loading_speed_start',      'Loading speed start (mm/s)'],
+    ['filament_unloading_speed',          'Unloading speed (mm/s)'],
+    ['filament_unloading_speed_start',    'Unloading speed start (mm/s)'],
+    ['filament_toolchange_delay',         'Toolchange delay (s)'],
+    // ── Cooling ────────────────────────────────────────────────────
+    ['fan_always_on',                     'Keep fan always on'],
+    ['close_fan_the_first_x_layers',      'Initial layer fan off (layers)'],
+    ['fan_min_speed',                     'Min fan speed (%)'],
+    ['fan_max_speed',                     'Max fan speed (%)'],
+    ['fan_cooling_layer_time',            'Layer time for min fan speed (s)'],
+    ['slow_down_layer_time',              'Layer time for max cooling (s)'],
+    ['slow_down_min_speed',               'Min print speed (mm/s)'],
+    ['slowdown_for_cooling',              'Slow down for better layer cooling'],
+    ['dont_slow_down_outer_walls',        'Don\'t slow down outer walls'],
+    ['overhang_fan_speed',                'Fan speed for overhangs (%)'],
+    ['overhang_fan_threshold',            'Cooling overhang threshold'],
+    ['force_cooling_for_overhang_and_bridge','Force cooling for overhangs & bridges'],
+    ['ironing_fan_speed',                 'Ironing fan speed (%)'],
+    // ── Filament scarf seam ────────────────────────────────────────
+    ['filament_scarf_seam_type',          'Scarf seam type'],
+    ['filament_scarf_height',             'Scarf start height'],
+    ['filament_scarf_gap',                'Scarf slope gap'],
+    ['filament_scarf_length',             'Scarf length'],
+  ];
+
+  // Sub-sections within each filament slot — mirrors Filament / Cooling tabs in slicer
+  const FILAMENT_SECTIONS = [
+    { label: 'Basic information', icon: '◈', keys: [
+      'filament_settings_id','filament_type','filament_colour','filament_vendor',
+      'filament_soluble','filament_is_support','required_nozzle_HRC','filament_diameter',
+      'filament_flow_ratio','filament_density','filament_shrinkage','filament_cost',
+      'filament_minimal_purge_on_wipe_tower','filament_wipe_distance','filament_id',
+    ]},
+    { label: 'Print temperature', icon: '🌡', keys: [
+      'nozzle_temperature','nozzle_temperature_initial_layer',
+      'hot_plate_temp','hot_plate_temp_initial_layer',
+      'cool_plate_temp','cool_plate_temp_initial_layer',
+      'eng_plate_temp','eng_plate_temp_initial_layer',
+      'textured_plate_temp','textured_plate_temp_initial_layer',
+      'bed_temperature','bed_temperature_initial_layer',
+    ]},
+    { label: 'Volumetric speed', icon: '⚡', keys: [
+      'filament_max_volumetric_speed','filament_loading_speed','filament_loading_speed_start',
+      'filament_unloading_speed','filament_unloading_speed_start','filament_toolchange_delay',
+    ]},
+    { label: 'Cooling', icon: '❄', keys: [
+      'fan_always_on','close_fan_the_first_x_layers','fan_min_speed','fan_max_speed',
+      'fan_cooling_layer_time','slow_down_layer_time','slow_down_min_speed',
+      'slowdown_for_cooling','dont_slow_down_outer_walls','overhang_fan_speed',
+      'overhang_fan_threshold','force_cooling_for_overhang_and_bridge','ironing_fan_speed',
+    ]},
+    { label: 'Filament scarf seam', icon: '◎', keys: [
+      'filament_scarf_seam_type','filament_scarf_height','filament_scarf_gap','filament_scarf_length',
+    ]},
   ];
 
   // Compute the full set of keys claimed by the schema + filament keys
@@ -1348,8 +1501,8 @@
       const labelDiv = mkEl('div', { className: 'setting-label' });
       labelDiv.appendChild(document.createTextNode(displayLabel));
       tr.appendChild(labelDiv);
-      tr.appendChild(buildValueDiv(row.fmtA, row.differs ? 'diff-a' : '', false));
-      tr.appendChild(buildValueDiv(row.fmtB, row.differs ? 'diff-b' : '', false));
+      tr.appendChild(buildValueDiv(row.fmtA, row.differs ? 'diff-a' : '', !!row.isColor));
+      tr.appendChild(buildValueDiv(row.fmtB, row.differs ? 'diff-b' : '', !!row.isColor));
       body.appendChild(tr);
       rowCount++;
     }
@@ -1421,7 +1574,7 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  //  Filaments tab renderer (uses CSS-grid rows like slicer tabs)
+  //  Filaments tab renderer — slot → sub-section structure
   // ═══════════════════════════════════════════════════════════════════
   function renderFilamentsTab(objA, objB, fileAName, fileBName, searchTerm = '') {
     const panel = $('panel-filaments');
@@ -1432,9 +1585,13 @@
       return;
     }
 
-    const rows = buildFilamentRows(objA, objB);
-    if (rows.length === 0) { renderEmptyState(panel, 'No filament data found.'); return; }
+    const slotCount = Math.max(
+      objA?.filament_type?.length ?? objA?.filament_settings_id?.length ?? 1,
+      objB?.filament_type?.length ?? objB?.filament_settings_id?.length ?? 1,
+    );
 
+    const keyLabelMap = new Map(FILAMENT_SLOT_KEYS.map(([k, l]) => [k, l]));
+    const viewMode = toolbar.viewMode;
     const wrap = mkEl('div', { className: 'settings-panel' });
 
     // Sticky column headers
@@ -1444,55 +1601,65 @@
     colHdr.appendChild(mkEl('div', { textContent: `(B) ${truncateName(fileBName) || 'File B'}` }));
     wrap.appendChild(colHdr);
 
-    // Group rows by section
-    let currentBlock = null;
-    let currentBody  = null;
-    let sectionDiffs = 0;
-    let sectionHdr   = null;
+    let anySlot = false;
 
-    const finalizeSection = () => {
-      if (currentBlock && sectionHdr) {
-        if (sectionDiffs > 0) {
-          sectionHdr.insertBefore(
-            mkEl('span', { className: 'section-diff-badge', textContent: String(sectionDiffs) }),
-            sectionHdr.querySelector('.collapse-arrow'),
-          );
+    for (let i = 0; i < slotCount; i++) {
+      // Collect all sub-section blocks for this slot first so we can count slot-level diffs
+      const subBlocks = [];
+      let slotDiffCount = 0;
+
+      for (const secDef of FILAMENT_SECTIONS) {
+        const secRows = secDef.keys.map(key => {
+          const label  = keyLabelMap.get(key) || key;
+          const arrA   = objA?.[key];
+          const arrB   = objB?.[key];
+          const rawA   = Array.isArray(arrA) ? (arrA[i] ?? null) : null;
+          const rawB   = Array.isArray(arrB) ? (arrB[i] ?? null) : null;
+          if (rawA === null && rawB === null) return null;
+          const fmtA   = rawA !== null ? { text: String(rawA), isLong: false } : { text: '—', isLong: false };
+          const fmtB   = rawB !== null ? { text: String(rawB), isLong: false } : { text: '—', isLong: false };
+          const differs = (rawA ?? '') !== (rawB ?? '');
+          return { key, label, fmtA, fmtB, differs, isColor: key === 'filament_colour' };
+        }).filter(Boolean);
+
+        if (secRows.length === 0) continue;
+        slotDiffCount += secRows.filter(r => r.differs).length;
+
+        const block = buildSectionBlock(secDef, secRows, viewMode, searchTerm);
+        if (block) {
+          // Indent sub-sections slightly inside the slot container
+          block.style.margin = '6px 10px';
+          subBlocks.push(block);
         }
       }
-    };
 
-    for (const row of rows) {
-      if (row.isSection) {
-        finalizeSection();
-        sectionDiffs = 0;
+      if (subBlocks.length === 0) continue;
+      anySlot = true;
 
-        currentBlock = mkEl('div', { className: 'section-block' });
-        sectionHdr   = mkEl('div', { className: 'section-header' });
-        sectionHdr.appendChild(mkEl('span', { className: 'section-icon', textContent: '🧵' }));
-        sectionHdr.appendChild(mkEl('span', { className: 'section-title', textContent: row.label }));
-        sectionHdr.appendChild(mkEl('span', { className: 'collapse-arrow', textContent: '▾' }));
-        sectionHdr.addEventListener('click', () => currentBlock.classList.toggle('collapsed'));
-        currentBlock.appendChild(sectionHdr);
+      // Slot outer card
+      const slotBlock = mkEl('div', { className: 'section-block' });
+      slotBlock.style.marginTop = i === 0 ? '10px' : '14px';
 
-        currentBody = mkEl('div', { className: 'section-body' });
-        currentBlock.appendChild(currentBody);
-        wrap.appendChild(currentBlock);
-      } else if (currentBody) {
-        if (searchTerm) {
-          const q = searchTerm.toLowerCase();
-          if (!row.key.toLowerCase().includes(q) && !row.label.toLowerCase().includes(q)) continue;
-        }
-        if (row.differs) sectionDiffs++;
-        const tr = mkEl('div', { className: `setting-row${row.differs ? ' diff-row' : ''}` });
-        const labelDiv = mkEl('div', { className: 'setting-label' });
-        labelDiv.appendChild(document.createTextNode(row.label));
-        tr.appendChild(labelDiv);
-        tr.appendChild(buildValueDiv(row.fmtA, row.differs ? 'diff-a' : '', !!row.isColor));
-        tr.appendChild(buildValueDiv(row.fmtB, row.differs ? 'diff-b' : '', !!row.isColor));
-        currentBody.appendChild(tr);
-      }
+      const slotHdr = mkEl('div', { className: 'section-header' });
+      slotHdr.style.fontWeight = '800';
+      slotHdr.appendChild(mkEl('span', { className: 'section-icon', textContent: '🧵' }));
+      slotHdr.appendChild(mkEl('span', { className: 'section-title', textContent: `Filament ${i + 1}` }));
+      if (slotDiffCount > 0)
+        slotHdr.appendChild(mkEl('span', { className: 'section-diff-badge', textContent: String(slotDiffCount) }));
+      slotHdr.appendChild(mkEl('span', { className: 'collapse-arrow', textContent: '▾' }));
+      slotHdr.addEventListener('click', () => slotBlock.classList.toggle('collapsed'));
+      slotBlock.appendChild(slotHdr);
+
+      const slotBody = mkEl('div', { className: 'section-body' });
+      slotBody.style.background = 'var(--panel-bg)';
+      slotBody.style.padding = '0 0 8px';
+      for (const b of subBlocks) slotBody.appendChild(b);
+      slotBlock.appendChild(slotBody);
+
+      wrap.appendChild(slotBlock);
     }
-    finalizeSection();
+
+    if (!anySlot) renderEmptyState(wrap, 'No filament data found.');
     panel.appendChild(wrap);
   }
 
@@ -1688,14 +1855,7 @@
       const totalDiffs = currentAllRows.filter(r => r.differs).length;
       $('toolbar-diff-count').textContent = `${totalDiffs} difference${totalDiffs !== 1 ? 's' : ''} found`;
 
-      // Auto-activate tab with most diffs
-      const tabDiffCounts = SLICER_SCHEMA.map(t => [t.id, t.id === 'others'
-        ? computeOthersDiffCount(currentAllRows, currentAllRowsMap)
-        : computeTabDiffCount(t, currentAllRowsMap)
-      ]);
-      tabDiffCounts.push(['filaments', filamentDiffCount]);
-      const best = tabDiffCounts.sort((a, b) => b[1] - a[1])[0][0];
-      switchTab(best);
+      switchTab('quality');
 
       // Show toolbar and results
       $('toolbar').classList.add('visible');

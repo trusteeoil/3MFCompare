@@ -6,6 +6,10 @@ Built for BambuStudio and OrcaSlicer, but also works with other PrusaSlicer-base
 
 ---
 
+Try it now: https://trusteeoil.github.io/3MFCompare/
+
+---
+
 ## Features
 
 - Compare two `.3mf` files side by side
